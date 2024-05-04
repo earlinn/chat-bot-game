@@ -35,7 +35,9 @@ class Database:
             ),
             echo=True,
         )
-        self.session = async_sessionmaker(self.engine, expire_on_commit=False)
+        self.session = async_sessionmaker(
+            self.engine, expire_on_commit=False, class_=AsyncSession
+        )
 
     async def disconnect(self, *args: Any, **kwargs: Any) -> None:
         if self.engine:

@@ -7,6 +7,7 @@ from aiohttp_apispec import setup_aiohttp_apispec
 from aiohttp_session import setup as session_setup
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 
+from app.admin.models import AdminModel
 from app.store import Store, setup_store
 from app.store.database.database import Database
 
@@ -25,7 +26,7 @@ class Application(AiohttpApplication):
 
 
 class Request(AiohttpRequest):
-    # admin: AdminModel | None = None
+    admin: AdminModel | None = None
 
     @property
     def app(self) -> Application:

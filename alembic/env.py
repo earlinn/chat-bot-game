@@ -1,16 +1,16 @@
 import asyncio
 from logging.config import fileConfig
 import os
-from pathlib import Path
 
+from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
+import yaml
 
-from alembic import context
-
+from app.admin.models import AdminModel  # noqa
 from app.store.database.sqlalchemy_base import BaseModel
-from app.web.app import setup_app
+from app.web.config import DatabaseConfig
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -21,17 +21,19 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-app = setup_app(
-    config_path=os.path.join(
-        Path(__file__).resolve().parent.parent, "etc", "config.yml"
-    )
-)
-url = (
-    f"postgresql+asyncpg://{app.config.database.user}:{app.config.database.password}"
-    f"@{app.config.database.host}:{app.config.database.port}/"
-    f"{app.config.database.database}"
+config_path = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), "..", "etc", "config.yml"
 )
 
+with open(config_path) as f:
+    raw_config = yaml.safe_load(f)
+
+app_config = DatabaseConfig(**raw_config["database"])
+
+url = (
+    f"postgresql+asyncpg://{app_config.user}:{app_config.password}"
+    f"@{app_config.host}:{app_config.port}/{app_config.database}"
+)
 
 config.set_main_option("sqlalchemy.url", url)
 
