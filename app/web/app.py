@@ -11,7 +11,7 @@ from app.admin.models import AdminModel
 from app.store import Store, setup_store
 from app.store.database.database import Database
 
-from .config import setup_config
+from .config import Config, setup_config
 from .logger import setup_logging
 from .mw import setup_middlewares
 from .routes import setup_routes
@@ -20,9 +20,9 @@ __all__ = ("Application",)
 
 
 class Application(AiohttpApplication):
-    config = None
-    store = None
-    database = None
+    config: Config | None = None
+    store: Store | None = None
+    database: Database | None = None
 
 
 class Request(AiohttpRequest):
