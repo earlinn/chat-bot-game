@@ -1,7 +1,13 @@
 debug: true
+web:
+  host: 127.0.0.1
+  port: 8000
 
-security:
-  token: token
+sentry:
+  dsn:
+  env: dev
+
+store: {}
 
 session:
   key: U-7ifh1kpIhDOBD8jodP0f3zx5Acez8EpVm3VKjPNWc=
