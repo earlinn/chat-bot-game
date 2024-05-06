@@ -6,13 +6,9 @@ from aiohttp import TCPConnector
 from aiohttp.client import ClientSession
 
 from app.base.base_accessor import BaseAccessor
-from app.store.tg_api.dataclasses import (
-    Chat,
-    Message,
-    Update,
-    User,
-)
+from app.store.tg_api.dataclasses import Message, Update
 from app.store.tg_api.poller import Poller
+from app.web.utils import TgGetUpdatesError
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application
@@ -45,13 +41,13 @@ class TgApiAccessor(BaseAccessor):
     def _build_query(host: str, method: str, params: dict) -> str:
         return f"{urljoin(host, method)}?{urlencode(params)}"
 
-    async def _get_updates(
+    async def get_updates(
         self,
         offset: int | None = None,
         limit: int = 100,
         timeout: int = 0,
         allowed_updates: list[str] | None = None,
-    ) -> list[Update] | None:
+    ) -> list[Update]:
         params = {}
         if offset:
             params["offset"] = offset
@@ -72,53 +68,17 @@ class TgApiAccessor(BaseAccessor):
             if not data["ok"]:
                 self.logger.error(
                     "Ошибка Telegram Bot: %s - %s",
-                    {data["error_code"]},
-                    {data["description"]},
+                    data["error_code"],
+                    data["description"],
                 )
-                return None
-            if data.get("result"):
-                updates: list[Update] = [
-                    Update(
-                        update_id=update["update_id"],
-                        message=Message(
-                            message_id=update["message"]["message_id"],
-                            from_=User(
-                                id=update["message"]["from"]["id"],
-                                is_bot=update["message"]["from"]["is_bot"],
-                                first_name=update["message"]["from"][
-                                    "first_name"
-                                ],
-                                last_name=update["message"]["from"][
-                                    "last_name"
-                                ],
-                                username=update["message"]["from"]["username"],
-                                language_code=update["message"]["from"][
-                                    "language_code"
-                                ],
-                            ),
-                            chat=Chat(
-                                id=update["message"]["chat"]["id"],
-                                first_name=update["message"]["chat"].get(
-                                    "first_name"
-                                ),
-                                last_name=update["message"]["chat"].get(
-                                    "last_name"
-                                ),
-                                username=update["message"]["chat"].get(
-                                    "username"
-                                ),
-                                type=update["message"]["chat"]["type"],
-                                title=update["message"]["chat"].get("title"),
-                            ),
-                            date=update["message"]["date"],
-                            text=update["message"].get("text"),
-                        ),
-                    )
-                    for update in data.get("result")
-                    if update.get("message")
-                ]
-            else:
-                updates = []
+                raise TgGetUpdatesError
+            if not data.get("result"):
+                return []
+            updates: list[Update] = [
+                Update.from_dict(update)
+                for update in data.get("result")
+                if update.get("message")
+            ]
             await self.app.store.bots_manager.run_echo(updates)
             return updates
 

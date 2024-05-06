@@ -3,6 +3,7 @@ from asyncio import Future, Task
 
 from app.store import Store
 from app.store.tg_api.dataclasses import Update
+from app.web.utils import TgGetUpdatesError
 
 
 class Poller:
@@ -26,16 +27,21 @@ class Poller:
 
     async def stop(self) -> None:
         self.is_running = False
-
-        await self.poll_task
+        if self.poll_task:
+            self.poll_task.cancel()
+            try:
+                await self.poll_task
+            except asyncio.CancelledError:
+                self.store.logger.exception("Polling was cancelled")
 
     async def poll(self) -> None:
         offset: int = 0
         while self.is_running:
-            res: list[Update] = await self.store.tg_api._get_updates(
-                offset=offset, timeout=30
-            )
-            if res is None:
+            try:
+                res: list[Update] = await self.store.tg_api.get_updates(
+                    offset=offset, timeout=30
+                )
+                if res:
+                    offset = res[-1].update_id + 1
+            except TgGetUpdatesError:
                 self.is_running = False
-            if res:
-                offset = res[-1].update_id + 1
