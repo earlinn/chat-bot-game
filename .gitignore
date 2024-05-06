@@ -179,3 +179,10 @@ pyrightconfig.json
 
 # VSCode staff
 .vscode/
+
+# Examples of Telegram Bot API responses
+getUpdates.json
+sendMessage.json
+
+# TODOs
+todo.txt

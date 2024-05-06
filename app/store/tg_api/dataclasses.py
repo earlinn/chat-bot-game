@@ -14,10 +14,11 @@ class Chat:
     first_name: str | None = None
     last_name: str | None = None
     username: str | None = None
+    title: str | None = None
 
 
 @dataclass
-class MessageFrom:
+class User:
     id: int
     is_bot: bool
     first_name: str
@@ -29,7 +30,7 @@ class MessageFrom:
 @dataclass
 class Message:
     message_id: int
-    from_: MessageFrom
+    from_: User
     chat: Chat
     date: int
     text: str | None = None

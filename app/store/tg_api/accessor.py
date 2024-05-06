@@ -9,8 +9,8 @@ from app.base.base_accessor import BaseAccessor
 from app.store.tg_api.dataclasses import (
     Chat,
     Message,
-    MessageFrom,
     Update,
+    User,
 )
 from app.store.tg_api.poller import Poller
 
@@ -82,7 +82,7 @@ class TgApiAccessor(BaseAccessor):
                         update_id=update["update_id"],
                         message=Message(
                             message_id=update["message"]["message_id"],
-                            from_=MessageFrom(
+                            from_=User(
                                 id=update["message"]["from"]["id"],
                                 is_bot=update["message"]["from"]["is_bot"],
                                 first_name=update["message"]["from"][
@@ -98,20 +98,24 @@ class TgApiAccessor(BaseAccessor):
                             ),
                             chat=Chat(
                                 id=update["message"]["chat"]["id"],
-                                first_name=update["message"]["chat"][
+                                first_name=update["message"]["chat"].get(
                                     "first_name"
-                                ],
-                                last_name=update["message"]["chat"][
+                                ),
+                                last_name=update["message"]["chat"].get(
                                     "last_name"
-                                ],
-                                username=update["message"]["chat"]["username"],
+                                ),
+                                username=update["message"]["chat"].get(
+                                    "username"
+                                ),
                                 type=update["message"]["chat"]["type"],
+                                title=update["message"]["chat"].get("title"),
                             ),
                             date=update["message"]["date"],
-                            text=update["message"]["text"],
+                            text=update["message"].get("text"),
                         ),
                     )
                     for update in data.get("result")
+                    if update.get("message")
                 ]
             else:
                 updates = []

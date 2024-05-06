@@ -17,7 +17,7 @@ class BotManager:
         for update in updates:
             await self.app.store.tg_api.send_message(
                 SendMessage(
-                    chat_id=update.message.from_.id,
+                    chat_id=update.message.chat.id,
                     text=update.message.text,
                 )
             )
