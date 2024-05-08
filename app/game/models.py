@@ -1,12 +1,14 @@
+import enum
 import re
 from datetime import datetime
 from typing import Annotated
 
-from sqlalchemy import ForeignKey, String, UniqueConstraint, func
+from sqlalchemy import ARRAY, ForeignKey, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.store.database.sqlalchemy_base import BaseModel
 
+PLAYER_BET_ERROR: str = "Ставка должна быть положительным числом."
 TG_USERNAME_ERROR: str = (
     "Username должен иметь длину от 5 до 32 символов, допускаются только "
     "латинские буквы, цифры и нижнее подчеркивание."
@@ -27,6 +29,9 @@ class PlayerModel(BaseModel):
 
     balances: Mapped[list["BalanceModel"]] = relationship(
         back_populates="player"
+    )
+    gameplays: Mapped[list["GamePlayModel"]] = relationship(
+        back_populates="game"
     )
 
     @validates("username")
@@ -53,3 +58,70 @@ class BalanceModel(BaseModel):
     __table_args__ = (
         UniqueConstraint("chat_id", "player_id", name="chat_player_unique"),
     )
+
+
+class GameStatus(enum.Enum):
+    ACTIVE = "active"
+    FINISHED = "finished"
+    INTERRUPTED = "interrupted"
+
+
+class GameStage(enum.Enum):
+    BETTING = "betting"
+    PLAYERHIT = "playerhit"
+    DILLERHIT = "dillerhit"
+    SUMMARIZING = "summarizing"
+
+
+class GameModel(BaseModel):
+    __tablename__ = "games"
+
+    id: Mapped[intpk]
+    chat_id: Mapped[int]
+    created_at: Mapped[created_at]
+    status: Mapped[GameStatus]
+    stage: Mapped[GameStage]
+    turn_player_id: Mapped[int]
+    # TODO: check that we can create game with diller_cards (list of strings)
+    diller_cards: Mapped[list[str]] = mapped_column(ARRAY(String))
+
+    gameplays: Mapped[list["GamePlayModel"]] = relationship(
+        back_populates="game"
+    )
+
+
+class PlayerStatus(enum.Enum):
+    BETTING = "betting"
+    TAKING = "taking"
+    STANDING = "standing"
+    EXCEEDED = "exceeded"
+    LOST = "lost"
+    WON = "won"
+
+
+class GamePlayModel(BaseModel):
+    __tablename__ = "gameplays"
+
+    id: Mapped[intpk]
+    game_id: Mapped[int] = mapped_column(
+        ForeignKey("games.id", ondelete="CASCADE")
+    )
+    player_id: Mapped[int] = mapped_column(
+        ForeignKey("players.id", ondelete="CASCADE")
+    )
+    player_bet: Mapped[int]
+    player_status: Mapped[PlayerStatus]
+    player_cards: Mapped[list[str]] = mapped_column(ARRAY(String))
+
+    game: Mapped["GameModel"] = relationship(back_populates="gameplays")
+    player: Mapped["PlayerModel"] = relationship(back_populates="gameplays")
+
+    __table_args__ = (
+        UniqueConstraint("game_id", "player_id", name="game_player_unique"),
+    )
+
+    @validates("player_bet")
+    def validate_player_bet(self, key, value):
+        if value <= 0:
+            raise ValueError(PLAYER_BET_ERROR)
+        return value
