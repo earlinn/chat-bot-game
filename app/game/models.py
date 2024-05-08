@@ -79,8 +79,8 @@ class GameModel(BaseModel):
     id: Mapped[intpk]
     chat_id: Mapped[int]
     created_at: Mapped[created_at]
-    status: Mapped[GameStatus]
-    stage: Mapped[GameStage]
+    status: Mapped[GameStatus] = mapped_column(default=GameStatus.ACTIVE)
+    stage: Mapped[GameStage] = mapped_column(default=GameStage.BETTING)
     turn_player_id: Mapped[int]
     # TODO: check that we can create game with diller_cards (list of strings)
     diller_cards: Mapped[list[str]] = mapped_column(ARRAY(String))
@@ -110,7 +110,9 @@ class GamePlayModel(BaseModel):
         ForeignKey("players.id", ondelete="CASCADE")
     )
     player_bet: Mapped[int]
-    player_status: Mapped[PlayerStatus]
+    player_status: Mapped[PlayerStatus] = mapped_column(
+        default=PlayerStatus.BETTING
+    )
     player_cards: Mapped[list[str]] = mapped_column(ARRAY(String))
 
     game: Mapped["GameModel"] = relationship(back_populates="gameplays")
