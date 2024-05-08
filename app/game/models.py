@@ -31,7 +31,7 @@ class PlayerModel(BaseModel):
         back_populates="player"
     )
     gameplays: Mapped[list["GamePlayModel"]] = relationship(
-        back_populates="game"
+        back_populates="player"
     )
 
     @validates("username")

@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 
+from aiohttp.web_exceptions import HTTPNotFound
 from sqlalchemy import select
 
 from app.base.base_accessor import BaseAccessor
@@ -32,3 +33,17 @@ class GameAccessor(BaseAccessor):
             session.add(balance)
             await session.commit()
             return balance
+
+    async def list_balances(
+        self, player_id: int | None = None
+    ) -> Sequence[BalanceModel]:
+        if not player_id:
+            query = select(BalanceModel)
+        elif await self.get_player_by_id(player_id):
+            query = select(BalanceModel).where(
+                BalanceModel.player_id == player_id
+            )
+        else:
+            raise HTTPNotFound
+        async with self.app.database.session() as session:
+            return await session.scalars(query)

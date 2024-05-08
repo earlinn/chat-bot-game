@@ -17,6 +17,10 @@ class PlayerListSchema(Schema):
     players = fields.Nested(PlayerSchema, many=True)
 
 
+class PlayerIdSchema(Schema):
+    player_id = fields.Int()
+
+
 class BalanceSchema(Schema):
     id = fields.Int(required=False)
     chat_id = fields.Int(required=True)
@@ -24,3 +28,7 @@ class BalanceSchema(Schema):
     current_value = fields.Int(required=False)
     max_value = fields.Int(required=False)
     min_value = fields.Int(required=False)
+
+
+class BalanceListSchema(Schema):
+    balances = fields.Nested(BalanceSchema, many=True)
