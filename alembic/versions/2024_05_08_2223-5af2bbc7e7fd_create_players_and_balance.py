@@ -1,8 +1,8 @@
 """create players and balance
 
-Revision ID: 2d989568e1e2
+Revision ID: 5af2bbc7e7fd
 Revises: 0afe0461799a
-Create Date: 2024-05-08 21:55:14.978044
+Create Date: 2024-05-08 22:23:59.725126
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '2d989568e1e2'
+revision: str = '5af2bbc7e7fd'
 down_revision: Union[str, None] = '0afe0461799a'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -37,7 +37,7 @@ def upgrade() -> None:
     sa.Column('min_value', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['player_id'], ['players.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('chat_id')
+    sa.UniqueConstraint('chat_id', 'player_id', name='chat_player_unique')
     )
     # ### end Alembic commands ###
 

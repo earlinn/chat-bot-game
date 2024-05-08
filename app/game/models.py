@@ -2,7 +2,7 @@ import re
 from datetime import datetime
 from typing import Annotated
 
-from sqlalchemy import ForeignKey, String, func
+from sqlalchemy import ForeignKey, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.store.database.sqlalchemy_base import BaseModel
@@ -40,7 +40,7 @@ class BalanceModel(BaseModel):
     __tablename__ = "balances"
 
     id: Mapped[intpk]
-    chat_id: Mapped[int_unique]
+    chat_id: Mapped[int]
     player_id: Mapped[int] = mapped_column(
         ForeignKey("players.id", ondelete="CASCADE")
     )
@@ -49,3 +49,7 @@ class BalanceModel(BaseModel):
     min_value: Mapped[int_default_1000]
 
     player: Mapped["PlayerModel"] = relationship(back_populates="balances")
+
+    __table_args__ = (
+        UniqueConstraint("chat_id", "player_id", name="chat_player_unique"),
+    )
