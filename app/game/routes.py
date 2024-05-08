@@ -3,6 +3,8 @@ import typing
 from app.game.views import (
     BalanceAddView,
     BalanceListView,
+    GameAddView,
+    GameListView,
     PlayerAddView,
     PlayerListView,
 )
@@ -16,3 +18,5 @@ def setup_routes(app: "Application"):
     app.router.add_view("/game.player_list", PlayerListView)
     app.router.add_view("/game.balance_add", BalanceAddView)
     app.router.add_view("/game.balance_list", BalanceListView)
+    app.router.add_view("/game.game_add", GameAddView)
+    app.router.add_view("/game.game_list", GameListView)

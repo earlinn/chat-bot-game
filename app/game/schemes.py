@@ -32,3 +32,17 @@ class BalanceSchema(Schema):
 
 class BalanceListSchema(Schema):
     balances = fields.Nested(BalanceSchema, many=True)
+
+
+class GameSchema(Schema):
+    id = fields.Int(required=False)
+    chat_id = fields.Int(required=True)
+    created_at = fields.DateTime(required=False)
+    status = fields.Str(required=False)
+    stage = fields.Str(required=False)
+    turn_player_id = fields.Int(required=False)
+    diller_cards = fields.List(fields.Str, required=True)
+
+
+class GameListSchema(Schema):
+    games = fields.Nested(GameSchema, many=True)

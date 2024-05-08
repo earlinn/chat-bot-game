@@ -9,6 +9,8 @@ from aiohttp_apispec import (
 from app.game.schemes import (
     BalanceListSchema,
     BalanceSchema,
+    GameListSchema,
+    GameSchema,
     PlayerIdSchema,
     PlayerListSchema,
     PlayerSchema,
@@ -43,8 +45,7 @@ class BalanceAddView(AuthRequiredMixin, View):
     @request_schema(BalanceSchema)
     @response_schema(BalanceSchema, 201)
     async def post(self):
-        chat_id = self.data["chat_id"]
-        player_id = self.data["player_id"]
+        chat_id, player_id = self.data["chat_id"], self.data["player_id"]
         if not await self.store.games.get_player_by_id(id_=player_id):
             raise HTTPNotFound(reason="no such player id")
         balance = await self.store.games.create_player_balance(
@@ -66,3 +67,23 @@ class BalanceListView(AuthRequiredMixin, View):
         return json_response(
             data=BalanceListSchema().dump({"balances": balances})
         )
+
+
+class GameAddView(AuthRequiredMixin, View):
+    @docs(tags=["games"], summary="Add new game")
+    @request_schema(GameSchema)
+    @response_schema(GameSchema, 201)
+    async def post(self):
+        chat_id, diller_cards = self.data["chat_id"], self.data["diller_cards"]
+        game = await self.store.games.create_game(
+            chat_id=chat_id, diller_cards=diller_cards
+        )
+        return json_response(data=GameSchema().dump(game))
+
+
+class GameListView(AuthRequiredMixin, View):
+    @docs(tags=["games"], summary="Get list of games")
+    @response_schema(GameListSchema, 200)
+    async def get(self):
+        games = await self.store.games.list_games()
+        return json_response(data=GameListSchema().dump({"games": games}))

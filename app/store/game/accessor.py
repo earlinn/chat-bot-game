@@ -4,7 +4,7 @@ from aiohttp.web_exceptions import HTTPNotFound
 from sqlalchemy import select
 
 from app.base.base_accessor import BaseAccessor
-from app.game.models import BalanceModel, PlayerModel
+from app.game.models import BalanceModel, GameModel, PlayerModel
 
 
 class GameAccessor(BaseAccessor):
@@ -46,4 +46,19 @@ class GameAccessor(BaseAccessor):
         else:
             raise HTTPNotFound
         async with self.app.database.session() as session:
+            return await session.scalars(query)
+
+    async def create_game(
+        self, chat_id: int, diller_cards: list[str]
+    ) -> GameModel:
+        async with self.app.database.session() as session:
+            game = GameModel(chat_id=chat_id, diller_cards=diller_cards)
+            session.add(game)
+            await session.commit()
+            return game
+
+    # TODO: добавить подгрузку связанных gameplays (selectinload и т.п.)
+    async def list_games(self) -> Sequence[GameModel]:
+        async with self.app.database.session() as session:
+            query = select(GameModel)
             return await session.scalars(query)

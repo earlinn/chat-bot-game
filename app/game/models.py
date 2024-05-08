@@ -81,8 +81,7 @@ class GameModel(BaseModel):
     created_at: Mapped[created_at]
     status: Mapped[GameStatus] = mapped_column(default=GameStatus.ACTIVE)
     stage: Mapped[GameStage] = mapped_column(default=GameStage.BETTING)
-    turn_player_id: Mapped[int]
-    # TODO: check that we can create game with diller_cards (list of strings)
+    turn_player_id: Mapped[int] = mapped_column(default=0)
     diller_cards: Mapped[list[str]] = mapped_column(ARRAY(String))
 
     gameplays: Mapped[list["GamePlayModel"]] = relationship(
