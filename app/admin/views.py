@@ -2,10 +2,11 @@ from aiohttp.web_exceptions import HTTPForbidden
 from aiohttp_apispec import docs, request_schema, response_schema
 from aiohttp_session import new_session
 
-from app.admin.schemes import AdminSchema
 from app.web.app import View
 from app.web.mixins import AuthRequiredMixin
 from app.web.utils import json_response
+
+from .schemes import AdminSchema
 
 
 class AdminLoginView(View):

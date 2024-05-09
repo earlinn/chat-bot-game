@@ -1,14 +1,22 @@
-import enum
 import re
 from datetime import datetime
 from typing import Annotated
 
-from sqlalchemy import ARRAY, ForeignKey, String, UniqueConstraint, func
+from sqlalchemy import (
+    ARRAY,
+    CheckConstraint,
+    ForeignKey,
+    String,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.store.database.sqlalchemy_base import BaseModel
 
-PLAYER_BET_ERROR: str = "Ставка должна быть положительным числом."
+from .const import GameStage, GameStatus, PlayerStatus
+
+# PLAYER_BET_ERROR: str = "Ставка должна быть положительным числом."
 TG_USERNAME_ERROR: str = (
     "Username должен иметь длину от 5 до 32 символов, допускаются только "
     "латинские буквы, цифры и нижнее подчеркивание."
@@ -32,6 +40,9 @@ class PlayerModel(BaseModel):
     )
     gameplays: Mapped[list["GamePlayModel"]] = relationship(
         back_populates="player"
+    )
+    turn_player_games: Mapped[list["GameModel"]] = relationship(
+        back_populates="turn_player"
     )
 
     @validates("username")
@@ -60,19 +71,6 @@ class BalanceModel(BaseModel):
     )
 
 
-class GameStatus(enum.Enum):
-    ACTIVE = "active"
-    FINISHED = "finished"
-    INTERRUPTED = "interrupted"
-
-
-class GameStage(enum.Enum):
-    BETTING = "betting"
-    PLAYERHIT = "playerhit"
-    DILLERHIT = "dillerhit"
-    SUMMARIZING = "summarizing"
-
-
 class GameModel(BaseModel):
     __tablename__ = "games"
 
@@ -81,21 +79,17 @@ class GameModel(BaseModel):
     created_at: Mapped[created_at]
     status: Mapped[GameStatus] = mapped_column(default=GameStatus.ACTIVE)
     stage: Mapped[GameStage] = mapped_column(default=GameStage.BETTING)
-    turn_player_id: Mapped[int] = mapped_column(default=0)
+    turn_player_id: Mapped[int] = mapped_column(
+        ForeignKey("players.id", ondelete="CASCADE"),
+        nullable=True,
+        default=None,
+    )
     diller_cards: Mapped[list[str]] = mapped_column(ARRAY(String))
 
     gameplays: Mapped[list["GamePlayModel"]] = relationship(
         back_populates="game"
     )
-
-
-class PlayerStatus(enum.Enum):
-    BETTING = "betting"
-    TAKING = "taking"
-    STANDING = "standing"
-    EXCEEDED = "exceeded"
-    LOST = "lost"
-    WON = "won"
+    turn_player: Mapped["PlayerModel"] = relationship(back_populates="game")
 
 
 class GamePlayModel(BaseModel):
@@ -119,10 +113,13 @@ class GamePlayModel(BaseModel):
 
     __table_args__ = (
         UniqueConstraint("game_id", "player_id", name="game_player_unique"),
+        CheckConstraint(
+            "player_bet > 0", name="positive_player_bet_constraint"
+        ),
     )
 
-    @validates("player_bet")
-    def validate_player_bet(self, key, value):
-        if value <= 0:
-            raise ValueError(PLAYER_BET_ERROR)
-        return value
+    # @validates("player_bet")
+    # def validate_player_bet(self, key, value):
+    #     if value <= 0:
+    #         raise ValueError(PLAYER_BET_ERROR)
+    #     return value

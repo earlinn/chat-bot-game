@@ -1,7 +1,7 @@
 from marshmallow import Schema, fields
 from marshmallow.validate import Regexp
 
-from app.game.models import TG_USERNAME_ERROR, TG_USERNAME_REGEX
+from .models import TG_USERNAME_ERROR, TG_USERNAME_REGEX
 
 
 class PlayerSchema(Schema):

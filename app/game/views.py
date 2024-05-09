@@ -6,7 +6,11 @@ from aiohttp_apispec import (
     response_schema,
 )
 
-from app.game.schemes import (
+from app.web.app import View
+from app.web.mixins import AuthRequiredMixin
+from app.web.utils import json_response
+
+from .schemes import (
     BalanceListSchema,
     BalanceSchema,
     GameListSchema,
@@ -15,9 +19,6 @@ from app.game.schemes import (
     PlayerListSchema,
     PlayerSchema,
 )
-from app.web.app import View
-from app.web.mixins import AuthRequiredMixin
-from app.web.utils import json_response
 
 
 class PlayerAddView(AuthRequiredMixin, View):

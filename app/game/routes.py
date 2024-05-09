@@ -1,6 +1,6 @@
 import typing
 
-from app.game.views import (
+from .views import (
     BalanceAddView,
     BalanceListView,
     GameAddView,
