@@ -47,8 +47,16 @@ class BalanceAddView(AuthRequiredMixin, View):
     @response_schema(BalanceSchema, 201)
     async def post(self):
         chat_id, player_id = self.data["chat_id"], self.data["player_id"]
+
+        # если убрать этот доп запрос, то основной запрос упадет с ошибкой
+        # sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.
+        # IntegrityError: <class 'asyncpg.exceptions.ForeignKeyViolationError'>:
+        # INSERT или UPDATE в таблице "balances" нарушает ограничение внешнего
+        # ключа "balances_player_id_fkey" # DETAIL:  Ключ (player_id)=(5)
+        # отсутствует в таблице "players".
         if not await self.store.games.get_player_by_id(id_=player_id):
             raise HTTPNotFound(reason="no such player id")
+
         balance = await self.store.games.create_player_balance(
             chat_id=chat_id, player_id=player_id
         )

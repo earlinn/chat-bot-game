@@ -14,9 +14,9 @@ if typing.TYPE_CHECKING:
 
 
 def setup_routes(app: "Application"):
-    app.router.add_view("/game.player_add", PlayerAddView)
-    app.router.add_view("/game.player_list", PlayerListView)
-    app.router.add_view("/game.balance_add", BalanceAddView)
-    app.router.add_view("/game.balance_list", BalanceListView)
-    app.router.add_view("/game.game_add", GameAddView)
-    app.router.add_view("/game.game_list", GameListView)
+    app.router.add_view("/game.add", GameAddView)
+    app.router.add_view("/game.list", GameListView)
+    app.router.add_view("/game.player.add", PlayerAddView)
+    app.router.add_view("/game.player.list", PlayerListView)
+    app.router.add_view("/game.player.balance.add", BalanceAddView)
+    app.router.add_view("/game.player.balance.list", BalanceListView)

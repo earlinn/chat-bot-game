@@ -57,6 +57,7 @@ class TgApiAccessor(BaseAccessor):
             params["timeout"] = timeout
         if allowed_updates:
             params["allowed_updates"] = allowed_updates
+
         async with self.session.get(
             self._build_query(
                 host=API_PATH,
@@ -65,6 +66,7 @@ class TgApiAccessor(BaseAccessor):
             )
         ) as response:
             data = await response.json()
+
             if not data["ok"]:
                 self.logger.error(
                     "Ошибка Telegram Bot: %s - %s",
@@ -72,8 +74,10 @@ class TgApiAccessor(BaseAccessor):
                     data["description"],
                 )
                 raise TgGetUpdatesError
+
             if not data.get("result"):
                 return []
+
             updates: list[Update] = [
                 Update.from_dict(update)
                 for update in data.get("result")

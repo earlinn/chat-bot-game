@@ -13,6 +13,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.store.database.sqlalchemy_base import BaseModel
+from app.web.utils import TgUsernameError
 
 from .const import GameStage, GameStatus, PlayerStatus
 
@@ -50,7 +51,7 @@ class PlayerModel(BaseModel):
     @validates("username")
     def validate_username(self, key: str, value: str):
         if not re.match(TG_USERNAME_REGEX, value):
-            raise ValueError(TG_USERNAME_ERROR)
+            raise TgUsernameError(TG_USERNAME_ERROR)
         return value
 
 
@@ -87,7 +88,9 @@ class GameModel(BaseModel):
         nullable=True,
         default=None,
     )
-    diller_cards: Mapped[list[str]] = mapped_column(ARRAY(String))
+    diller_cards: Mapped[list[str]] = mapped_column(
+        ARRAY(String)
+    )  # TODO: json?
 
     gameplays: Mapped[list["GamePlayModel"]] = relationship(
         back_populates="game"
@@ -111,7 +114,9 @@ class GamePlayModel(BaseModel):
     player_status: Mapped[PlayerStatus] = mapped_column(
         default=PlayerStatus.BETTING
     )
-    player_cards: Mapped[list[str]] = mapped_column(ARRAY(String))
+    player_cards: Mapped[list[str]] = mapped_column(
+        ARRAY(String)
+    )  # TODO: json?
 
     game: Mapped["GameModel"] = relationship(back_populates="gameplays")
     player: Mapped["PlayerModel"] = relationship(back_populates="gameplays")

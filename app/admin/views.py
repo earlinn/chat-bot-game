@@ -15,8 +15,8 @@ class AdminLoginView(View):
     @response_schema(AdminSchema, 200)
     async def post(self):
         email, password = self.data["email"], self.data["password"]
-
         admin = await self.store.admins.get_by_email(email)
+
         if not (admin and admin.is_password_valid(password)):
             raise HTTPForbidden(reason="admin not found or invalid password")
 
