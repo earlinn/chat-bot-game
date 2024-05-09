@@ -1,8 +1,8 @@
 """create games table
 
-Revision ID: d651eee5642e
-Revises: 5af2bbc7e7fd
-Create Date: 2024-05-09 12:25:46.648625
+Revision ID: 34d6a9fb3bb7
+Revises: 7fe51aa76be1
+Create Date: 2024-05-09 19:42:17.010717
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'd651eee5642e'
-down_revision: Union[str, None] = '5af2bbc7e7fd'
+revision: str = '34d6a9fb3bb7'
+down_revision: Union[str, None] = '7fe51aa76be1'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -23,7 +23,7 @@ def upgrade() -> None:
     op.create_table('games',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('chat_id', sa.Integer(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text("TIMEZONE('utc', now())"), nullable=False),
     sa.Column('status', sa.Enum('ACTIVE', 'FINISHED', 'INTERRUPTED', name='gamestatus'), nullable=False),
     sa.Column('stage', sa.Enum('BETTING', 'PLAYERHIT', 'DILLERHIT', 'SUMMARIZING', name='gamestage'), nullable=False),
     sa.Column('turn_player_id', sa.Integer(), nullable=True),

@@ -26,8 +26,9 @@ class BalanceSchema(Schema):
     chat_id = fields.Int(required=True)
     player_id = fields.Int(required=True)
     current_value = fields.Int(required=False)
-    max_value = fields.Int(required=False)
-    min_value = fields.Int(required=False)
+    # TODO: add max_value, min_value after MVP
+    # max_value = fields.Int(required=False)
+    # min_value = fields.Int(required=False)
 
 
 class BalanceListSchema(Schema):
@@ -40,7 +41,7 @@ class GameSchema(Schema):
     created_at = fields.DateTime(required=False)
     status = fields.Str(required=False)
     stage = fields.Str(required=False)
-    turn_player_id = fields.Int(required=False)
+    turn_player_id = fields.Int(required=False, allow_none=True)
     diller_cards = fields.List(fields.Str, required=True)
 
 

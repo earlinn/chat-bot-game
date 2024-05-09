@@ -1,8 +1,8 @@
 """create gameplays table
 
-Revision ID: 3491c9fae5d4
-Revises: d651eee5642e
-Create Date: 2024-05-09 12:27:05.968085
+Revision ID: 39e2544c8942
+Revises: 34d6a9fb3bb7
+Create Date: 2024-05-09 19:43:28.981985
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '3491c9fae5d4'
-down_revision: Union[str, None] = 'd651eee5642e'
+revision: str = '39e2544c8942'
+down_revision: Union[str, None] = '34d6a9fb3bb7'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

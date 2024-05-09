@@ -8,7 +8,7 @@ from sqlalchemy import (
     ForeignKey,
     String,
     UniqueConstraint,
-    func,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
@@ -25,7 +25,9 @@ TG_USERNAME_REGEX: str = r"^[a-zA-Z0-9_]{5,32}$"
 intpk = Annotated[int, mapped_column(primary_key=True)]
 int_unique = Annotated[int, mapped_column(unique=True)]
 int_default_1000 = Annotated[int, mapped_column(default=1000)]
-created_at = Annotated[datetime, mapped_column(server_default=func.now())]
+created_at = Annotated[
+    datetime, mapped_column(server_default=text("TIMEZONE('utc', now())"))
+]
 
 
 class PlayerModel(BaseModel):
@@ -38,15 +40,15 @@ class PlayerModel(BaseModel):
     balances: Mapped[list["BalanceModel"]] = relationship(
         back_populates="player"
     )
-    gameplays: Mapped[list["GamePlayModel"]] = relationship(
-        back_populates="player"
-    )
     turn_player_games: Mapped[list["GameModel"]] = relationship(
         back_populates="turn_player"
     )
+    gameplays: Mapped[list["GamePlayModel"]] = relationship(
+        back_populates="player"
+    )
 
     @validates("username")
-    def validate_username(self, key, value):
+    def validate_username(self, key: str, value: str):
         if not re.match(TG_USERNAME_REGEX, value):
             raise ValueError(TG_USERNAME_ERROR)
         return value
@@ -61,8 +63,9 @@ class BalanceModel(BaseModel):
         ForeignKey("players.id", ondelete="CASCADE")
     )
     current_value: Mapped[int_default_1000]
-    max_value: Mapped[int_default_1000]
-    min_value: Mapped[int_default_1000]
+    # TODO: add max_value, min_value after MVP
+    # max_value: Mapped[int_default_1000]
+    # min_value: Mapped[int_default_1000]
 
     player: Mapped["PlayerModel"] = relationship(back_populates="balances")
 
@@ -89,7 +92,9 @@ class GameModel(BaseModel):
     gameplays: Mapped[list["GamePlayModel"]] = relationship(
         back_populates="game"
     )
-    turn_player: Mapped["PlayerModel"] = relationship(back_populates="game")
+    turn_player: Mapped["PlayerModel"] = relationship(
+        back_populates="turn_player_games"
+    )
 
 
 class GamePlayModel(BaseModel):
