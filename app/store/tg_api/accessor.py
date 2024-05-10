@@ -1,3 +1,4 @@
+import json
 import os
 import typing
 from urllib.parse import urlencode, urljoin
@@ -6,7 +7,7 @@ from aiohttp import TCPConnector
 from aiohttp.client import ClientSession
 
 from app.base.base_accessor import BaseAccessor
-from app.store.tg_api.dataclasses import Message, Update
+from app.store.tg_api.dataclasses import SendMessage, Update
 from app.store.tg_api.poller import Poller
 from app.web.utils import TgGetUpdatesError
 
@@ -83,15 +84,41 @@ class TgApiAccessor(BaseAccessor):
                 for update in data.get("result")
                 if update.get("message")
             ]
-            await self.app.store.bots_manager.run_echo(updates)
             return updates
 
-    async def send_message(self, message: Message) -> None:
+    async def send_message(self, message: SendMessage) -> None:
         async with self.session.get(
             self._build_query(
                 API_PATH,
                 "sendMessage",
                 params={"chat_id": message.chat_id, "text": message.text},
+            )
+        ) as response:
+            data = await response.json()
+            self.logger.info(data)
+
+    async def send_message_with_button(self, message: SendMessage) -> None:
+        button_text = message.reply_markup.inline_keyboard[0].text
+        button_url = message.reply_markup.inline_keyboard[0].url
+        async with self.session.get(
+            self._build_query(
+                API_PATH,
+                "sendMessage",
+                params={
+                    "chat_id": message.chat_id,
+                    "text": message.text,
+                    # TODO: хочется сделать в этом методе аргумент reply_markup,
+                    # в котором уже сразу будет нужная json-строка, и передавать
+                    # её в параметр reply_markup так:
+                    # "reply_markup": reply_markup
+                    "reply_markup": json.dumps(
+                        {
+                            "inline_keyboard": [
+                                [{"text": button_text, "url": button_url}]
+                            ]
+                        }
+                    ),
+                },
             )
         ) as response:
             data = await response.json()

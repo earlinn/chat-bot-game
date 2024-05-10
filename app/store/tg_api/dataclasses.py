@@ -2,9 +2,22 @@ from dataclasses import dataclass
 
 
 @dataclass
+class InlineKeyboardButton:
+    text: str
+    url: str | None = None
+    callback_data: str | None = None
+
+
+@dataclass
+class InlineKeyboardMarkup:
+    inline_keyboard: list[InlineKeyboardButton]
+
+
+@dataclass
 class SendMessage:
     chat_id: int
     text: str
+    reply_markup: InlineKeyboardMarkup | None = None
 
 
 @dataclass
