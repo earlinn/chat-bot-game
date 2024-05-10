@@ -25,18 +25,20 @@ class BotManager:
         self.logger = getLogger("handler")
 
     async def say_hi(self, update: Update):
+        button_message: SendMessage = SendMessage(
+            chat_id=update.message.chat.id,
+            text=WELCOME_MESSAGE,
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    InlineKeyboardButton(
+                        text=GAME_RULES_MESSAGE, url=GAME_RULES_URL
+                    )
+                ]
+            ),
+        )
+        reply_markup = button_message.reply_markup.json_reply_markup_keyboard()
         await self.app.store.tg_api.send_message_with_button(
-            SendMessage(
-                chat_id=update.message.chat.id,
-                text=WELCOME_MESSAGE,
-                reply_markup=InlineKeyboardMarkup(
-                    [
-                        InlineKeyboardButton(
-                            text=GAME_RULES_MESSAGE, url=GAME_RULES_URL
-                        )
-                    ]
-                ),
-            )
+            button_message, reply_markup
         )
 
     async def unknown_command(self, update: Update):

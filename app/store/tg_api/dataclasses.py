@@ -1,3 +1,4 @@
+import json
 from dataclasses import dataclass
 
 
@@ -11,6 +12,17 @@ class InlineKeyboardButton:
 @dataclass
 class InlineKeyboardMarkup:
     inline_keyboard: list[InlineKeyboardButton]
+
+    def json_reply_markup_keyboard(self):
+        res_dict = {
+            "inline_keyboard": [
+                [
+                    {"text": button.text, "url": button.url}
+                    for button in self.inline_keyboard
+                ]
+            ]
+        }
+        return json.dumps(res_dict)
 
 
 @dataclass

@@ -1,4 +1,3 @@
-import json
 import os
 import typing
 from urllib.parse import urlencode, urljoin
@@ -97,9 +96,9 @@ class TgApiAccessor(BaseAccessor):
             data = await response.json()
             self.logger.info(data)
 
-    async def send_message_with_button(self, message: SendMessage) -> None:
-        button_text = message.reply_markup.inline_keyboard[0].text
-        button_url = message.reply_markup.inline_keyboard[0].url
+    async def send_message_with_button(
+        self, message: SendMessage, reply_markup: str
+    ) -> None:
         async with self.session.get(
             self._build_query(
                 API_PATH,
@@ -107,17 +106,7 @@ class TgApiAccessor(BaseAccessor):
                 params={
                     "chat_id": message.chat_id,
                     "text": message.text,
-                    # TODO: хочется сделать в этом методе аргумент reply_markup,
-                    # в котором уже сразу будет нужная json-строка, и передавать
-                    # её в параметр reply_markup так:
-                    # "reply_markup": reply_markup
-                    "reply_markup": json.dumps(
-                        {
-                            "inline_keyboard": [
-                                [{"text": button_text, "url": button_url}]
-                            ]
-                        }
-                    ),
+                    "reply_markup": reply_markup,
                 },
             )
         ) as response:
