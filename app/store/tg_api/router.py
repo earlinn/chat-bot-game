@@ -20,16 +20,8 @@ class Router:
             update.message.chat.id
         )
         if update.message.text == "/start" and not current_chat_game:
-            # TODO: проверить, есть ли в текущем чате активная игра,
-            # если есть, то предложить дождаться ее окончания либо почитать
-            # правила игры; если активных игр нет, то предложить начать игру
-            # или почитать правила игры.
-
-            # пока опустим проверку статуса игры, просто выведем приветственное
-            # сообщение. Давай пока сделаем все в BotManager, позже можно
-            # будет вынести из него хендлеры.
-            await self.store.bots_manager.say_hi(update)
-        if update.message.text == "/start" and current_chat_game:
-            pass
+            await self.store.bots_manager.say_hi_and_play(update)
+        elif update.message.text == "/start" and current_chat_game:
+            await self.store.bots_manager.say_hi_and_wait(update)
         else:
             await self.store.bots_manager.unknown_command(update)

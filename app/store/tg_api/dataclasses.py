@@ -1,5 +1,5 @@
 import json
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 
 @dataclass
@@ -13,11 +13,15 @@ class InlineKeyboardButton:
 class InlineKeyboardMarkup:
     inline_keyboard: list[InlineKeyboardButton]
 
-    def json_reply_markup_keyboard(self):
+    def json_reply_markup_keyboard(self) -> str:
         res_dict = {
             "inline_keyboard": [
                 [
-                    {"text": button.text, "url": button.url}
+                    {
+                        key: value
+                        for (key, value) in asdict(button).items()
+                        if value
+                    }
                     for button in self.inline_keyboard
                 ]
             ]
