@@ -27,14 +27,14 @@ class InlineKeyboardMarkup:
 
 @dataclass
 class SendMessage:
-    chat_id: int
+    chat_id: str
     text: str
     reply_markup: InlineKeyboardMarkup | None = None
 
 
 @dataclass
 class Chat:
-    id: int
+    id: str
     type: str
     first_name: str | None = None
     last_name: str | None = None
@@ -81,7 +81,7 @@ class Update:
                     language_code=update["message"]["from"]["language_code"],
                 ),
                 chat=Chat(
-                    id=update["message"]["chat"]["id"],
+                    id=str(update["message"]["chat"]["id"]),
                     first_name=update["message"]["chat"].get("first_name"),
                     last_name=update["message"]["chat"].get("last_name"),
                     username=update["message"]["chat"].get("username"),

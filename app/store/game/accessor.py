@@ -1,8 +1,9 @@
 from collections.abc import Sequence
 
-from sqlalchemy import select
+from sqlalchemy import and_, select
 
 from app.base.base_accessor import BaseAccessor
+from app.game.const import GameStatus
 from app.game.models import BalanceModel, GameModel, PlayerModel
 
 
@@ -25,7 +26,7 @@ class GameAccessor(BaseAccessor):
             return await session.scalar(query)
 
     async def create_player_balance(
-        self, chat_id: int, player_id: int
+        self, chat_id: str, player_id: int
     ) -> BalanceModel:
         balance = BalanceModel(chat_id=chat_id, player_id=player_id)
         async with self.app.database.session() as session:
@@ -46,7 +47,7 @@ class GameAccessor(BaseAccessor):
             return await session.scalars(query)
 
     async def create_game(
-        self, chat_id: int, diller_cards: list[str]
+        self, chat_id: str, diller_cards: list[str]
     ) -> GameModel:
         game = GameModel(chat_id=chat_id, diller_cards=diller_cards)
         async with self.app.database.session() as session:
@@ -59,3 +60,15 @@ class GameAccessor(BaseAccessor):
         query = select(GameModel)
         async with self.app.database.session() as session:
             return await session.scalars(query)
+
+    async def get_active_game_by_chat_id(
+        self, chat_id: str
+    ) -> GameModel | None:
+        query = select(GameModel).filter(
+            and_(
+                GameModel.chat_id == chat_id,
+                GameModel.status == GameStatus.ACTIVE,
+            )
+        )
+        async with self.app.database.session() as session:
+            return await session.scalar(query)

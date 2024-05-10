@@ -59,7 +59,7 @@ class BalanceModel(BaseModel):
     __tablename__ = "balances"
 
     id: Mapped[intpk]
-    chat_id: Mapped[int]
+    chat_id: Mapped[str]
     player_id: Mapped[int] = mapped_column(
         ForeignKey("players.id", ondelete="CASCADE")
     )
@@ -79,7 +79,7 @@ class GameModel(BaseModel):
     __tablename__ = "games"
 
     id: Mapped[intpk]
-    chat_id: Mapped[int]
+    chat_id: Mapped[str]
     created_at: Mapped[created_at]
     status: Mapped[GameStatus] = mapped_column(default=GameStatus.ACTIVE)
     stage: Mapped[GameStage] = mapped_column(default=GameStage.BETTING)
