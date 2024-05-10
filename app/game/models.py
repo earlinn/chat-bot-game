@@ -4,6 +4,7 @@ from typing import Annotated
 
 from sqlalchemy import (
     ARRAY,
+    BigInteger,
     CheckConstraint,
     ForeignKey,
     String,
@@ -59,7 +60,7 @@ class BalanceModel(BaseModel):
     __tablename__ = "balances"
 
     id: Mapped[intpk]
-    chat_id: Mapped[str]
+    chat_id: Mapped[int] = mapped_column(BigInteger())
     player_id: Mapped[int] = mapped_column(
         ForeignKey("players.id", ondelete="CASCADE")
     )
@@ -79,7 +80,7 @@ class GameModel(BaseModel):
     __tablename__ = "games"
 
     id: Mapped[intpk]
-    chat_id: Mapped[str]
+    chat_id: Mapped[int] = mapped_column(BigInteger())
     created_at: Mapped[created_at]
     status: Mapped[GameStatus] = mapped_column(default=GameStatus.ACTIVE)
     stage: Mapped[GameStage] = mapped_column(default=GameStage.BETTING)

@@ -23,7 +23,7 @@ class PlayerIdSchema(Schema):
 
 class BalanceSchema(Schema):
     id = fields.Int(required=False)
-    chat_id = fields.Str(required=True)
+    chat_id = fields.Int(required=True)
     player_id = fields.Int(required=True)
     current_value = fields.Int(required=False)
     # TODO: add max_value, min_value after MVP
@@ -37,7 +37,7 @@ class BalanceListSchema(Schema):
 
 class GameSchema(Schema):
     id = fields.Int(required=False)
-    chat_id = fields.Str(required=True)
+    chat_id = fields.Int(required=True)
     created_at = fields.DateTime(required=False)
     status = fields.Str(required=False)
     stage = fields.Str(required=False)

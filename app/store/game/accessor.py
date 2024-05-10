@@ -26,7 +26,7 @@ class GameAccessor(BaseAccessor):
             return await session.scalar(query)
 
     async def create_player_balance(
-        self, chat_id: str, player_id: int
+        self, chat_id: int, player_id: int
     ) -> BalanceModel:
         balance = BalanceModel(chat_id=chat_id, player_id=player_id)
         async with self.app.database.session() as session:
@@ -47,7 +47,7 @@ class GameAccessor(BaseAccessor):
             return await session.scalars(query)
 
     async def create_game(
-        self, chat_id: str, diller_cards: list[str]
+        self, chat_id: int, diller_cards: list[str]
     ) -> GameModel:
         game = GameModel(chat_id=chat_id, diller_cards=diller_cards)
         async with self.app.database.session() as session:
@@ -62,7 +62,7 @@ class GameAccessor(BaseAccessor):
             return await session.scalars(query)
 
     async def get_active_game_by_chat_id(
-        self, chat_id: str
+        self, chat_id: int
     ) -> GameModel | None:
         query = select(GameModel).filter(
             and_(
