@@ -58,14 +58,14 @@ class Router:
         ) = await self.store.games.get_active_game_by_chat_id(chat.id)
 
         if current_game and (
-            query == "start_timer"
+            query == "join_new_game"
             or query == "add_player"
             and current_game.stage != GameStage.WAITING
         ):
             await self.store.bots_manager.wait_next_game(chat.id)
 
-        elif query == "start_timer":
-            await self.store.bots_manager.start_timer(chat.id)
+        elif query == "join_new_game":
+            await self.store.bots_manager.join_new_game(chat.id)
 
         elif query == "add_player":
             player: PlayerModel = await self.store.players.get_player_by_tg_id(
