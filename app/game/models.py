@@ -110,7 +110,7 @@ class GamePlayModel(BaseModel):
     player_status: Mapped[PlayerStatus] = mapped_column(
         default=PlayerStatus.BETTING
     )
-    player_cards: Mapped[list[str]] = mapped_column(
+    player_cards: Mapped[list[str] | None] = mapped_column(
         ARRAY(String)
     )  # TODO: make it json after MVP?
 

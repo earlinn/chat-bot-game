@@ -13,7 +13,11 @@ if typing.TYPE_CHECKING:
 
 WELCOME_MESSAGE: str = "Добро пожаловать в бот для игры в Блэк Джек!"
 WELCOME_WAITING_MESSAGE: str = (
-    "Добро пожаловать в бот для игры в Блэк Джек! "
+    "Добро пожаловать в бот для игры в Блэк Джек!\n"
+    "В настоящее время в этом чате уже идет игра. "
+    "Чтобы сыграть, пожалуйста, дождитесь окончания текущей игры."
+)
+WAITING_MESSAGE: str = (
     "В настоящее время в этом чате уже идет игра. "
     "Чтобы сыграть, пожалуйста, дождитесь окончания текущей игры."
 )
@@ -33,7 +37,7 @@ class BotManager:
     def __init__(self, app: "Application"):
         self.app = app
         self.bot = None
-        self.logger = getLogger("handler")
+        self.logger = getLogger("bot manager")
 
     async def say_hi_and_play(self, update: Update):
         button_message: SendMessage = SendMessage(
@@ -54,9 +58,9 @@ class BotManager:
         reply_markup = button_message.reply_markup.json_reply_markup_keyboard()
         await self.app.store.tg_api.send_message(button_message, reply_markup)
 
-    async def say_hi_and_wait(self, update: Update):
+    async def say_hi_and_wait(self, chat_id: int):
         button_message: SendMessage = SendMessage(
-            chat_id=update.message.chat.id,
+            chat_id=chat_id,
             text=WELCOME_WAITING_MESSAGE,
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -69,20 +73,22 @@ class BotManager:
         reply_markup = button_message.reply_markup.json_reply_markup_keyboard()
         await self.app.store.tg_api.send_message(button_message, reply_markup)
 
+    async def wait_next_game(self, chat_id: int):
+        button_message: SendMessage = SendMessage(
+            chat_id=chat_id, text=WAITING_MESSAGE
+        )
+        await self.app.store.tg_api.send_message(button_message)
+
     async def start_timer(self, chat_id: int):
         # TODO: запустить асинхронный обратный отсчет времени,
         # после окончания времени бот должен вывести сообщение типа
-        # "игра началась, играют: (перепислить юзернеймы без @)"
+        # "игра началась, играют: (перечислить юзернеймы без @)"
         button_message = SendMessage(
             chat_id=chat_id,
             text=START_TIMER_MESSAGE,
             reply_markup=InlineKeyboardMarkup(
                 [
                     InlineKeyboardButton(
-                        # TODO: вместо url сделать callback_data, который будет
-                        # вызывать функцию, присоединяющую игрока к игре и
-                        # выводящую сообщение бота типа
-                        # "username участвует в игре"
                         text=GAME_JOIN_BUTTON,
                         callback_data="add_player",
                     ),
@@ -92,7 +98,12 @@ class BotManager:
         reply_markup = button_message.reply_markup.json_reply_markup_keyboard()
         await self.app.store.tg_api.send_message(button_message, reply_markup)
 
+    async def player_joined(self, chat_id: int, username: str):
+        await self.app.store.tg_api.send_message(
+            SendMessage(chat_id=chat_id, text=f"{username} в игре")
+        )
+
     async def unknown_command(self, chat_id: int):
         await self.app.store.tg_api.send_message(
-            SendMessage(chat_id=chat_id, text=UNKNOWN_COMMAND_MESSAGE + "♦️♠️♥️♣️")
+            SendMessage(chat_id=chat_id, text=UNKNOWN_COMMAND_MESSAGE)
         )

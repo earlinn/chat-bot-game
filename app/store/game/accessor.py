@@ -3,8 +3,8 @@ from collections.abc import Sequence
 from sqlalchemy import and_, select
 
 from app.base.base_accessor import BaseAccessor
-from app.game.const import GameStatus
-from app.game.models import BalanceModel, GameModel, PlayerModel
+from app.game.const import GameStage, GameStatus
+from app.game.models import BalanceModel, GameModel, GamePlayModel, PlayerModel
 
 
 class PlayerAccessor(BaseAccessor):
@@ -22,6 +22,11 @@ class PlayerAccessor(BaseAccessor):
 
     async def get_player_by_id(self, id_: int) -> PlayerModel | None:
         query = select(PlayerModel).where(PlayerModel.id == id_)
+        async with self.app.database.session() as session:
+            return await session.scalar(query)
+
+    async def get_player_by_tg_id(self, tg_id: int) -> PlayerModel | None:
+        query = select(PlayerModel).where(PlayerModel.tg_id == tg_id)
         async with self.app.database.session() as session:
             return await session.scalar(query)
 
@@ -70,6 +75,44 @@ class GameAccessor(BaseAccessor):
             and_(
                 GameModel.chat_id == chat_id,
                 GameModel.status == GameStatus.ACTIVE,
+            )
+        )
+        async with self.app.database.session() as session:
+            return await session.scalar(query)
+
+    async def get_active_waiting_game_by_chat_id(
+        self, chat_id: int
+    ) -> GameModel | None:
+        query = select(GameModel).filter(
+            and_(
+                GameModel.chat_id == chat_id,
+                GameModel.status == GameStatus.ACTIVE,
+                GameModel.stage == GameStage.WAITING,
+            )
+        )
+        async with self.app.database.session() as session:
+            return await session.scalar(query)
+
+
+class GamePlayAccessor(BaseAccessor):
+    async def create_gameplay(
+        self, game_id: int, player_id: int
+    ) -> GamePlayModel:
+        gameplay = GamePlayModel(
+            game_id=game_id, player_id=player_id, player_bet=1
+        )
+        async with self.app.database.session() as session:
+            session.add(gameplay)
+            await session.commit()
+        return gameplay
+
+    async def get_gameplay_by_game_and_player(
+        self, game_id: int, player_id: int
+    ) -> GamePlayModel | None:
+        query = select(GamePlayModel).filter(
+            and_(
+                GamePlayModel.game_id == game_id,
+                GamePlayModel.player_id == player_id,
             )
         )
         async with self.app.database.session() as session:
