@@ -17,7 +17,6 @@ class Store:
             PlayerAccessor,
         )
         from app.store.tg_api.accessor import TgApiAccessor
-        from app.users.accessor import UserAccessor  # TODO: remove?
 
         self.admins = AdminAccessor(app)
         self.players = PlayerAccessor(app)
@@ -25,7 +24,6 @@ class Store:
         self.gameplays = GamePlayAccessor(app)
         self.bots_manager = BotManager(app)
         self.tg_api = TgApiAccessor(app)
-        self.user = UserAccessor(app)  # TODO: remove?
         self.logger = getLogger("store")
 
 
