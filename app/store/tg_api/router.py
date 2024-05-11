@@ -29,7 +29,16 @@ class Router:
             await self.store.bots_manager.say_hi_and_play(update)
         elif message and message.text == "/start" and current_chat_game:
             await self.store.bots_manager.say_hi_and_wait(update)
-        elif callback_query and callback_query.data == "some_func":
+        elif callback_query and callback_query.data == "start_timer":
             await self.store.bots_manager.start_timer(chat.id)
+        elif callback_query and callback_query.data == "add_player":
+            # TODO:
+            # - найти или создать в БД Player с id этого юзера
+            # - найти или создать в этом чате Game со статусом active и
+            # стадией waiting, если есть активная игра на другой стадии, то
+            # послать юзера в say_hi_and_wait (для тех, кто опоздал)
+            # - создать GamePlay, связанный с этими Player и Game
+            # - от имени бота написать в чат "username участвует в игре"
+            pass
         else:
             await self.store.bots_manager.unknown_command(chat.id)

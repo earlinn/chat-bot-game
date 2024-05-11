@@ -18,7 +18,6 @@ from app.web.exceptions import TgUsernameError
 
 from .const import GameStage, GameStatus, PlayerStatus
 
-# PLAYER_BET_ERROR: str = "Ставка должна быть положительным числом."
 TG_USERNAME_REGEX: str = r"^[a-zA-Z0-9_]{5,32}$"
 intpk = Annotated[int, mapped_column(primary_key=True)]
 int_unique = Annotated[int, mapped_column(unique=True)]
@@ -79,7 +78,7 @@ class GameModel(BaseModel):
     chat_id: Mapped[int] = mapped_column(BigInteger())
     created_at: Mapped[created_at]
     status: Mapped[GameStatus] = mapped_column(default=GameStatus.ACTIVE)
-    stage: Mapped[GameStage] = mapped_column(default=GameStage.BETTING)
+    stage: Mapped[GameStage] = mapped_column(default=GameStage.WAITING)
     turn_player_id: Mapped[int] = mapped_column(
         ForeignKey("players.id", ondelete="CASCADE"),
         nullable=True,
