@@ -79,35 +79,27 @@ class TgApiAccessor(BaseAccessor):
                 return []
 
             updates: list[Update] = [
-                Update.from_dict(update)
-                for update in data.get("result")
-                if update.get("message")
+                Update.from_dict(update) for update in data.get("result")
             ]
             return updates
 
-    async def send_message(self, message: SendMessage) -> None:
-        async with self.session.get(
-            self._build_query(
-                API_PATH,
-                "sendMessage",
-                params={"chat_id": message.chat_id, "text": message.text},
-            )
-        ) as response:
-            data = await response.json()
-            self.logger.info(data)
-
-    async def send_message_with_button(
-        self, message: SendMessage, reply_markup: str
+    async def send_message(
+        self, message: SendMessage, reply_markup: str | None = None
     ) -> None:
+        if reply_markup is not None:
+            params = {
+                "chat_id": message.chat_id,
+                "text": message.text,
+                "reply_markup": reply_markup,
+            }
+        else:
+            params = {"chat_id": message.chat_id, "text": message.text}
+
         async with self.session.get(
             self._build_query(
                 API_PATH,
                 "sendMessage",
-                params={
-                    "chat_id": message.chat_id,
-                    "text": message.text,
-                    "reply_markup": reply_markup,
-                },
+                params=params,
             )
         ) as response:
             data = await response.json()
