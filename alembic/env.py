@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 import yaml
 
 from app.admin.models import AdminModel  # noqa
+from app.game.models import PlayerModel  # noqa
 from app.store.database.sqlalchemy_base import BaseModel
 from app.web.config import DatabaseConfig
 
