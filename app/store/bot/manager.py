@@ -5,7 +5,6 @@ from app.store.tg_api.dataclasses import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     SendMessage,
-    Update,
 )
 
 if typing.TYPE_CHECKING:
@@ -39,9 +38,9 @@ class BotManager:
         self.bot = None
         self.logger = getLogger("bot manager")
 
-    async def say_hi_and_play(self, update: Update):
+    async def say_hi_and_play(self, chat_id: int):
         button_message: SendMessage = SendMessage(
-            chat_id=update.message.chat.id,
+            chat_id=chat_id,
             text=WELCOME_MESSAGE,
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -103,6 +102,7 @@ class BotManager:
             SendMessage(chat_id=chat_id, text=f"{username} в игре")
         )
 
+    # TODO: пока не используется
     async def unknown_command(self, chat_id: int):
         await self.app.store.tg_api.send_message(
             SendMessage(chat_id=chat_id, text=UNKNOWN_COMMAND_MESSAGE)
