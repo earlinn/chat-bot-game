@@ -8,7 +8,7 @@ from aiohttp.client import ClientSession
 from app.base.base_accessor import BaseAccessor
 from app.store.tg_api.dataclasses import SendMessage, Update
 from app.store.tg_api.poller import Poller
-from app.web.utils import TgGetUpdatesError
+from app.web.exceptions import TgGetUpdatesError
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application

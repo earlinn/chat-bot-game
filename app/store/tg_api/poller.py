@@ -2,7 +2,7 @@ import asyncio
 from asyncio import Future, Task
 
 from app.store import Store
-from app.web.utils import TgGetUpdatesError
+from app.web.exceptions import TgGetUpdatesError
 
 from .dataclasses import Update
 from .router import Router

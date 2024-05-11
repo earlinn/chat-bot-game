@@ -16,7 +16,7 @@ class Router:
     async def _process_update(self, update: Update):
         message: Message | None = update.message
         callback_query: CallbackQuery | None = update.callback_query
-        
+
         # TODO: а если у callback_query отсутствует поле message?
         # Поле chat_instance тоже не подходит, т.к. chat_instance != chat.id
         chat: Chat = message.chat if message else callback_query.message.chat
