@@ -4,6 +4,7 @@ from logging import getLogger
 from app.game.const import CARDS, GameStage
 from app.game.models import GameModel, GamePlayModel, PlayerModel
 from app.store import Store
+from app.store.bot.const import ADD_PLAYER_CALLBACK, JOIN_GAME_CALLBACK
 from app.store.tg_api.dataclasses import CallbackQuery, Chat, Message, Update
 
 
@@ -18,9 +19,9 @@ class Router:
     async def get_updates(self, updates: list[Update]) -> None:
         """Принимает список updates и по одному отправляет их на обработку."""
         for update in updates:
-            await self._process_update(update)
+            await self._route_update(update)
 
-    async def _process_update(self, update: Update) -> None:
+    async def _route_update(self, update: Update) -> None:
         """Перенаправляет update в нужный обработчик в зависимости от типа."""
         message: Message | None = update.message
         callback_query: CallbackQuery | None = update.callback_query
@@ -58,16 +59,18 @@ class Router:
         ) = await self.store.games.get_active_game_by_chat_id(chat.id)
 
         if current_game and (
-            query == "join_new_game"
-            or query == "add_player"
-            and current_game.stage != GameStage.WAITING
+            query == JOIN_GAME_CALLBACK
+            or (
+                query == ADD_PLAYER_CALLBACK
+                and current_game.stage != GameStage.WAITING
+            )
         ):
             await self.store.bots_manager.wait_next_game(chat.id)
 
-        elif query == "join_new_game":
+        elif query == JOIN_GAME_CALLBACK:
             await self.store.bots_manager.join_new_game(chat.id)
 
-        elif query == "add_player":
+        elif query == ADD_PLAYER_CALLBACK:
             player: PlayerModel = await self.store.players.get_player_by_tg_id(
                 callback_query.from_.id
             ) or await self.store.players.create_player(

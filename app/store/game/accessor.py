@@ -71,7 +71,7 @@ class GameAccessor(BaseAccessor):
     async def get_active_game_by_chat_id(
         self, chat_id: int
     ) -> GameModel | None:
-        query = select(GameModel).filter(
+        query = select(GameModel).where(
             and_(
                 GameModel.chat_id == chat_id,
                 GameModel.status == GameStatus.ACTIVE,

@@ -1,6 +1,6 @@
 import enum
 
-SUITS: list[str] = ["♦️", "♠️", "♥️", "♣️"]
+SUITS: list[str] = ("♦️", "♠️", "♥️", "♣️")
 RANKS: dict[str, int] = {str(number): number for number in range(2, 11)}
 RANKS.update({"J": 10, "Q": 10, "K": 10, "A": 11})
 CARDS: dict[str, int] = {
