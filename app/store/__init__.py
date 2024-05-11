@@ -11,15 +11,16 @@ class Store:
     def __init__(self, app: "Application"):
         from app.store.admin.accessor import AdminAccessor
         from app.store.bot.manager import BotManager
-        from app.store.game.accessor import GameAccessor
+        from app.store.game.accessor import GameAccessor, PlayerAccessor
         from app.store.tg_api.accessor import TgApiAccessor
-        from app.users.accessor import UserAccessor
+        from app.users.accessor import UserAccessor  # TODO: remove?
 
         self.admins = AdminAccessor(app)
+        self.players = PlayerAccessor(app)
         self.games = GameAccessor(app)
         self.bots_manager = BotManager(app)
         self.tg_api = TgApiAccessor(app)
-        self.user = UserAccessor(app)
+        self.user = UserAccessor(app)  # TODO: remove?
         self.logger = getLogger("store")
 
 

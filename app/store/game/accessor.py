@@ -7,7 +7,7 @@ from app.game.const import GameStatus
 from app.game.models import BalanceModel, GameModel, PlayerModel
 
 
-class GameAccessor(BaseAccessor):
+class PlayerAccessor(BaseAccessor):
     async def create_player(self, username: str, tg_id: int) -> PlayerModel:
         player = PlayerModel(username=username, tg_id=tg_id)
         async with self.app.database.session() as session:
@@ -46,6 +46,8 @@ class GameAccessor(BaseAccessor):
         async with self.app.database.session() as session:
             return await session.scalars(query)
 
+
+class GameAccessor(BaseAccessor):
     async def create_game(
         self, chat_id: int, diller_cards: list[str]
     ) -> GameModel:
