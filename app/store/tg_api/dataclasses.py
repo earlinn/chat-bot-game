@@ -4,6 +4,14 @@ from typing import Any, Optional
 
 
 @dataclass
+class BotManagerContext:
+    """Контекст для передачи в методы-обработчики класса BotManager."""
+
+    chat_id: int
+    username: str | None = None
+
+
+@dataclass
 class InlineKeyboardButton:
     """This object represents one button of an inline keyboard.
     You must use exactly one of the optional fields.

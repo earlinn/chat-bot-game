@@ -7,6 +7,8 @@ from app.store import Store
 from app.store.bot.const import ADD_PLAYER_CALLBACK, JOIN_GAME_CALLBACK
 from app.store.tg_api.dataclasses import CallbackQuery, Chat, Message, Update
 
+from .dataclasses import BotManagerContext
+
 
 class Router:
     """Распределяет обновления (updates) по нужным хендлерам."""
@@ -32,19 +34,26 @@ class Router:
         else:
             self.logger.error("Another type of update: %s", update)
 
+    async def _get_bot_context(
+        self, chat_id: int, username: str | None = None
+    ) -> BotManagerContext:
+        """Собирает контекст в экземпляр класса BotManagerContext."""
+        return BotManagerContext(chat_id, username)
+
     async def _process_message_update(self, message: Message) -> None:
         """Обрабатывает update типа message: ходит в базу данных и
         в зависимости от результата вызывает различные методы BotManager.
         """
         chat: Chat = message.chat
+        bot_context: BotManagerContext = await self._get_bot_context(chat.id)
         current_game: (
             GameModel | None
         ) = await self.store.games.get_active_game_by_chat_id(chat.id)
 
         if message.text == "/start" and not current_game:
-            await self.store.bots_manager.say_hi_and_play(chat.id)
+            await self.store.bots_manager.say_hi_and_play(bot_context)
         elif message.text == "/start" and current_game:
-            await self.store.bots_manager.say_hi_and_wait(chat.id)
+            await self.store.bots_manager.say_hi_and_wait(bot_context)
 
     async def _process_callback_query_update(
         self, callback_query: CallbackQuery
@@ -54,6 +63,7 @@ class Router:
         """
         query: str = callback_query.data
         chat: Chat = callback_query.message.chat
+        bot_context: BotManagerContext = await self._get_bot_context(chat.id)
         current_game: (
             GameModel | None
         ) = await self.store.games.get_active_game_by_chat_id(chat.id)
@@ -65,11 +75,25 @@ class Router:
                 and current_game.stage != GameStage.WAITING
             )
         ):
-            await self.store.bots_manager.wait_next_game(chat.id)
+            await self.store.bots_manager.wait_next_game(bot_context)
 
         elif query == JOIN_GAME_CALLBACK:
-            await self.store.bots_manager.join_new_game(chat.id)
+            await self.store.bots_manager.join_new_game(bot_context)
 
+        # TODO: если игры в чате нет, но кто-то вместо кнопки "Начать новую
+        # игру" нажал на кнопку "Присоединиться к игре", то создаются игрок,
+        # новая игра и геймплей игрока, при этом бот не пишет, что начата игра,
+        # таймер не запускается, бот пишет только "<username> в игре", а для
+        # читающих даже не очевидно, что начинается игра. И тогда же можно
+        # создать самого первого игрока - того юзера, который нажал на кнопку
+        # "Начать новую игру". Тогда нам впоследствии не придется чистить БД
+        # от игр, в которых нет ни одного игрока.
+
+        # Наверно экземпляр GameModel надо создавать раньше - при нажатии на
+        # кнопку "Начать новую игру", а тут надо проверять, есть ли какая-то
+        # игра на стадии WAITING. Если нет, то писать "На данный момент ни одна
+        # игра не запущена. Чтобы запустить игру, нажмите на кнопку Начать новую
+        # игру". Если есть, то создавать геймплей для этого юзера.
         elif query == ADD_PLAYER_CALLBACK:
             player_created, player = await self.store.players.get_or_create(
                 model=PlayerModel,
@@ -115,6 +139,5 @@ class Router:
                 "Gameplay: %s, created: %s", gameplay, gameplay_created
             )
 
-            await self.store.bots_manager.player_joined(
-                chat.id, player.username
-            )
+            bot_context.username = player.username
+            await self.store.bots_manager.player_joined(bot_context)
