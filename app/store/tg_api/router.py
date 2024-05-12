@@ -1,7 +1,7 @@
 import random
 from logging import getLogger
 
-from app.game.const import CARDS, GameStage
+from app.game.const import CARDS, GameStage, GameStatus
 from app.game.models import GameModel, GamePlayModel, PlayerModel
 from app.store import Store
 from app.store.bot.const import ADD_PLAYER_CALLBACK, JOIN_GAME_CALLBACK
@@ -71,34 +71,50 @@ class Router:
             await self.store.bots_manager.join_new_game(chat.id)
 
         elif query == ADD_PLAYER_CALLBACK:
-            player: PlayerModel = await self.store.players.get_player_by_tg_id(
-                callback_query.from_.id
-            ) or await self.store.players.create_player(
-                username=callback_query.from_.username,
-                tg_id=callback_query.from_.id,
+            player_created, player = await self.store.players.get_or_create(
+                model=PlayerModel,
+                get_params=[PlayerModel.tg_id == callback_query.from_.id],
+                create_params={
+                    "username": callback_query.from_.username,
+                    "tg_id": callback_query.from_.id,
+                },
             )
-            self.logger.info("Player: %s", player)
+            self.logger.info("Player: %s, created: %s", player, player_created)
+            if player_created:
+                # TODO: если создается новый игрок, то нужно также создать ему
+                # баланс в этом чате
+                pass
 
-            game: GameModel = (
-                await self.store.games.get_active_waiting_game_by_chat_id(
-                    chat.id
-                )
-                or await self.store.games.create_game(
-                    chat_id=chat.id,
-                    diller_cards=[random.choice(list(CARDS))],
-                )
+            game_created, game = await self.store.players.get_or_create(
+                model=GameModel,
+                get_params=[
+                    GameModel.chat_id == chat.id,
+                    GameModel.status == GameStatus.ACTIVE,
+                    GameModel.stage == GameStage.WAITING,
+                ],
+                create_params={
+                    "chat_id": chat.id,
+                    "diller_cards": [random.choice(list(CARDS))],
+                },
             )
-            self.logger.info("Game: %s", game)
+            self.logger.info("Game: %s, created: %s", game, game_created)
 
-            gameplay: GamePlayModel = (
-                await self.store.gameplays.get_gameplay_by_game_and_player(
-                    game.id, player.id
-                )
-                or await self.store.gameplays.create_gameplay(
-                    game_id=game.id, player_id=player.id
-                )
+            gameplay_created, gameplay = await self.store.players.get_or_create(
+                model=GamePlayModel,
+                get_params=[
+                    GamePlayModel.game_id == game.id,
+                    GamePlayModel.player_id == player.id,
+                ],
+                create_params={
+                    "game_id": game.id,
+                    "player_id": player.id,
+                    "player_bet": 1,
+                },
             )
+            self.logger.info(
+                "Gameplay: %s, created: %s", gameplay, gameplay_created
+            )
+
             await self.store.bots_manager.player_joined(
                 chat.id, player.username
             )
-            self.logger.info("Gameplay: %s", gameplay)

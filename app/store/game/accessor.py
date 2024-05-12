@@ -25,6 +25,7 @@ class PlayerAccessor(BaseAccessor):
         async with self.app.database.session() as session:
             return await session.scalar(query)
 
+    # TODO: больше не используется из-за появления get_or_create в BaseAccessor
     async def get_player_by_tg_id(self, tg_id: int) -> PlayerModel | None:
         query = select(PlayerModel).where(PlayerModel.tg_id == tg_id)
         async with self.app.database.session() as session:
@@ -80,10 +81,11 @@ class GameAccessor(BaseAccessor):
         async with self.app.database.session() as session:
             return await session.scalar(query)
 
+    # TODO: больше не используется из-за появления get_or_create в BaseAccessor
     async def get_active_waiting_game_by_chat_id(
         self, chat_id: int
     ) -> GameModel | None:
-        query = select(GameModel).filter(
+        query = select(GameModel).where(
             and_(
                 GameModel.chat_id == chat_id,
                 GameModel.status == GameStatus.ACTIVE,
@@ -95,6 +97,7 @@ class GameAccessor(BaseAccessor):
 
 
 class GamePlayAccessor(BaseAccessor):
+    # TODO: больше не используется из-за появления get_or_create в BaseAccessor
     async def create_gameplay(
         self, game_id: int, player_id: int
     ) -> GamePlayModel:
@@ -106,10 +109,11 @@ class GamePlayAccessor(BaseAccessor):
             await session.commit()
         return gameplay
 
+    # TODO: больше не используется из-за появления get_or_create в BaseAccessor
     async def get_gameplay_by_game_and_player(
         self, game_id: int, player_id: int
     ) -> GamePlayModel | None:
-        query = select(GamePlayModel).filter(
+        query = select(GamePlayModel).where(
             and_(
                 GamePlayModel.game_id == game_id,
                 GamePlayModel.player_id == player_id,

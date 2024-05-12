@@ -73,7 +73,10 @@ class TgApiAccessor(BaseAccessor):
                     data["error_code"],
                     data["description"],
                 )
-                raise TgGetUpdatesError
+                raise TgGetUpdatesError(
+                    error_code=data["error_code"],
+                    description=data["description"],
+                )
 
             if not data.get("result"):
                 return []
