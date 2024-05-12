@@ -21,6 +21,7 @@ from .const import (
     GAME_RULES_URL,
     GAME_START_BUTTON,
     JOIN_GAME_CALLBACK,
+    JOIN_NON_EXISTENT_GAME_ERROR,
     JOINED_GAME_MESSAGE,
     START_TIMER_MESSAGE,
     TIMER_DELAY_IN_SECONDS,
@@ -132,6 +133,17 @@ class BotManager:
             SendMessage(
                 chat_id=context.chat_id,
                 text=JOINED_GAME_MESSAGE.format(username=context.username),
+            )
+        )
+
+    async def join_non_existent_game_fail(self, context: BotManagerContext):
+        """Печатает сообщение о том, что нельзя присоединиться
+        к несуществующей игре.
+        """
+        await self.app.store.tg_api.send_message(
+            SendMessage(
+                chat_id=context.chat_id,
+                text=JOIN_NON_EXISTENT_GAME_ERROR,
             )
         )
 
