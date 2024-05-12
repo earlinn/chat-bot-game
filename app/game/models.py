@@ -123,9 +123,3 @@ class GamePlayModel(BaseModel):
             "player_bet > 0", name="positive_player_bet_constraint"
         ),
     )
-
-    # @validates("player_bet")
-    # def validate_player_bet(self, key, value):
-    #     if value <= 0:
-    #         raise ValueError(PLAYER_BET_ERROR)
-    #     return value
