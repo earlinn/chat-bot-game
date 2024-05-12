@@ -92,3 +92,12 @@ def cli(
     application: Application,
 ) -> TestClient:
     return event_loop.run_until_complete(aiohttp_client(application))
+
+
+@pytest.fixture
+async def auth_cli(cli: TestClient, config: Config) -> TestClient:
+    await cli.post(
+        path="/admin.login",
+        json={"email": config.admin.email, "password": config.admin.password},
+    )
+    return cli
