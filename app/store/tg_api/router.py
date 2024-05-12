@@ -18,7 +18,7 @@ class Router:
         self.store = store
         self.logger = getLogger("bot router")
 
-    async def get_updates(self, updates: list[Update]) -> None:
+    async def route_updates(self, updates: list[Update]) -> None:
         """Принимает список updates и по одному отправляет их на обработку."""
         for update in updates:
             await self._route_update(update)

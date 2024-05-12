@@ -45,7 +45,7 @@ class Poller:
                     offset=offset, timeout=30
                 )
                 if res:
-                    await self.router.get_updates(res)
+                    await self.router.route_updates(res)
                     offset = res[-1].update_id + 1
             except TgGetUpdatesError:
                 self.is_running = False

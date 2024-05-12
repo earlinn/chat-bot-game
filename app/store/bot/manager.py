@@ -9,6 +9,7 @@ from app.store.tg_api.dataclasses import (
     SendMessage,
 )
 
+# TODO: может сделать from .const import * ?
 from .const import (
     ADD_PLAYER_CALLBACK,
     BET_10_BUTTON,
@@ -75,7 +76,7 @@ class BotManager:
 
     async def say_hi_and_wait(self, context: BotManagerContext):
         """Печатает приветствие и кнопку 'Посмотреть правила игры',
-        предлагает долждаться окончания текущей игры.
+        предлагает дождаться окончания текущей игры.
         """
         button_message = SendMessage(
             chat_id=context.chat_id,
@@ -154,7 +155,7 @@ class BotManager:
     # Однако это нарушит ограничение, что запросы к БД делаются только
     # из роутера.
     async def start_betting_stage(self, context: BotManagerContext):
-        """Печатает сообщение о старте игры и кнопки, чтобы делать ставки."""
+        """Печатает сообщение о старте игры и кнопки для ставок."""
         # TODO: перед ставками чекнуть, что в игре хотя бы один игрок
         button_message = SendMessage(
             chat_id=context.chat_id,
