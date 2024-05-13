@@ -18,3 +18,6 @@ migrate:
 
 downgrade:
 	alembic downgrade -1
+
+pytest-one-test:
+	pytest tests/<path to test file>.py::<class name>::<method name>

@@ -6,3 +6,4 @@ TEST_PLAYER_INVALID_USERNAMES: list[str] = [
     "no space",  # contains spaces
     "special!char",  # contains special characters
 ]
+TEST_CHAT_ID = -4242424242

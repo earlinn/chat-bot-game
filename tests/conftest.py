@@ -17,6 +17,8 @@ from app.store import Database, Store
 from app.web.app import Application, setup_app
 from app.web.config import Config
 
+from .fixtures import *
+
 
 @pytest.fixture(scope="session")
 def event_loop() -> Iterator[None]:

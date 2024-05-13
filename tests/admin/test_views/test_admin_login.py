@@ -6,7 +6,7 @@ from app.web.config import Config
 class TestAdminLoginView:
     async def test_success_when_good_credentials(
         self, cli: TestClient, config: Config
-    ) -> None:
+    ):
         """Переданы верные данные."""
         response = await cli.post(
             "/admin.login",
@@ -23,7 +23,7 @@ class TestAdminLoginView:
             "data": {"id": 1, "email": config.admin.email},
         }
 
-    async def test_bad_request_when_missed_email(self, cli: TestClient) -> None:
+    async def test_bad_request_when_missed_email(self, cli: TestClient):
         """Не передано поле email."""
         response = await cli.post("/admin.login", json={"password": "qwerty"})
         assert response.status == 400
@@ -35,9 +35,7 @@ class TestAdminLoginView:
             "data": {"json": {"email": ["Missing data for required field."]}},
         }
 
-    async def test_forbidden_when_not_valid_credentials(
-        self, cli: TestClient
-    ) -> None:
+    async def test_forbidden_when_not_valid_credentials(self, cli: TestClient):
         """Переданы неверные данные."""
         response = await cli.post(
             "/admin.login",
