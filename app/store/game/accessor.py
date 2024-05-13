@@ -86,10 +86,9 @@ class GameAccessor(BaseAccessor):
             await session.commit()
         return game
 
-    # TODO: добавить подгрузку связанных gameplays (selectinload и т.п.)
     async def list_games(self) -> Sequence[GameModel]:
         """Отдает список всех игр."""
-        query = select(GameModel)
+        query = select(GameModel).options(selectinload(GameModel.gameplays))
         async with self.app.database.session() as session:
             return await session.scalars(query)
 
