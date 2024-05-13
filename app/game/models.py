@@ -19,9 +19,10 @@ from app.web.exceptions import TgUsernameError
 from .const import GameStage, GameStatus, PlayerStatus
 
 TG_USERNAME_REGEX: str = r"^[a-zA-Z0-9_]{5,32}$"
+DEFAULT_NEW_BALANCE = 1000
 intpk = Annotated[int, mapped_column(primary_key=True)]
 int_unique = Annotated[int, mapped_column(unique=True)]
-int_default_1000 = Annotated[int, mapped_column(default=1000)]
+int_default_1000 = Annotated[int, mapped_column(default=DEFAULT_NEW_BALANCE)]
 created_at = Annotated[
     datetime, mapped_column(server_default=text("TIMEZONE('utc', now())"))
 ]

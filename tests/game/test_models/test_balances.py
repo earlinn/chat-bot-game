@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload
 
-from app.game.models import BalanceModel, PlayerModel
+from app.game.models import DEFAULT_NEW_BALANCE, BalanceModel, PlayerModel
 from tests.const import *
 
 
@@ -20,7 +20,7 @@ class TestPlayerModel:
             session.add(balance)
             await session.commit()
 
-        assert balance.current_value == 1000
+        assert balance.current_value == DEFAULT_NEW_BALANCE
 
     async def test_chat_player_unique_constraint(
         self,
