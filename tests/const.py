@@ -7,3 +7,4 @@ TEST_PLAYER_INVALID_USERNAMES: list[str] = [
     "special!char",  # contains special characters
 ]
 TEST_CHAT_ID = -4242424242
+TEST_DILLER_CARD = "Q♣️"

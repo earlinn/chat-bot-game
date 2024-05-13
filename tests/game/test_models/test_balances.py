@@ -8,8 +8,9 @@ from app.game.models import DEFAULT_NEW_BALANCE, BalanceModel, PlayerModel
 from tests.const import *
 
 
-class TestPlayerModel:
-    async def test_default_in_current_value(
+# TODO: test cascade balance deletion when player is deleted
+class TestBalanceModel:
+    async def test_default_current_value(
         self,
         db_sessionmaker: async_sessionmaker[AsyncSession],
         player: PlayerModel,
