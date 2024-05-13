@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 
-from sqlalchemy import and_, select
+from sqlalchemy import and_, select, update
+from sqlalchemy.orm import selectinload
 
 from app.base.base_accessor import BaseAccessor
 from app.game.const import GameStage, GameStatus
@@ -119,6 +120,28 @@ class GameAccessor(BaseAccessor):
         )
         async with self.app.database.session() as session:
             return await session.scalar(query)
+
+    async def change_active_game_stage(
+        self, chat_id: int, stage: GameStage
+    ) -> GameModel:
+        """Находит активную игру по chat_id, переводит ее на новую стадию
+        и возвращает эту игру. Если в чате нет активной игры, возвращает None.
+        """
+        query = (
+            update(GameModel)
+            .where(
+                and_(
+                    GameModel.chat_id == chat_id,
+                    GameModel.status == GameStatus.ACTIVE,
+                )
+            )
+            .values(stage=stage)
+            .returning(GameModel)
+        ).options(selectinload(GameModel.players))
+        async with self.app.database.session() as session:
+            game = await session.scalar(query)
+            await session.commit()
+        return game
 
 
 class GamePlayAccessor(BaseAccessor):

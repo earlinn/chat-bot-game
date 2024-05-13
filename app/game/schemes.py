@@ -47,5 +47,15 @@ class GameSchema(Schema):
     diller_cards = fields.List(fields.Str, required=True)
 
 
+class GameUpdateStageSchema(Schema):
+    id = fields.Int(required=False)
+    chat_id = fields.Int(required=True)
+    created_at = fields.DateTime(required=False)
+    status = fields.Str(required=False)
+    stage = fields.Str(required=False)
+    turn_player_id = fields.Int(required=False, allow_none=True)
+    diller_cards = fields.List(fields.Str, required=False)
+
+
 class GameListSchema(Schema):
     games = fields.Nested(GameSchema, many=True)

@@ -2,6 +2,8 @@ import asyncio
 import typing
 from logging import getLogger
 
+from app.game.const import GameStage
+from app.game.models import GameModel
 from app.store.tg_api.dataclasses import (
     BotManagerContext,
     InlineKeyboardButton,
@@ -148,18 +150,21 @@ class BotManager:
             )
         )
 
-    # TODO:
-    # Хочется вывести в этом сообщении список username игроков в текущей
-    # игре, но чтобы их узнать, нужно прямо из этого метода сделать запрос в БД
-    # для получения активной игры в данном чате и ее игроков.
-    # Однако это нарушит ограничение, что запросы к БД делаются только
-    # из роутера.
     async def start_betting_stage(self, context: BotManagerContext):
-        """Печатает сообщение о старте игры и кнопки для ставок."""
-        # TODO: перед ставками чекнуть, что в игре хотя бы один игрок
+        """Печатает сообщение о старте игры, её участниках,
+        а также выводит кнопки для ставок.
+        """
+        current_game: GameModel = (
+            await self.app.store.games.change_active_game_stage(
+                chat_id=context.chat_id, stage=GameStage.BETTING
+            )
+        )
+        players: str = ", ".join(
+            ["@" + player.username for player in current_game.players]
+        )
         button_message = SendMessage(
             chat_id=context.chat_id,
-            text=END_TIMER_MESSAGE,
+            text=END_TIMER_MESSAGE.format(players=players),
             reply_markup=InlineKeyboardMarkup(
                 [
                     InlineKeyboardButton(

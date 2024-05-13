@@ -78,6 +78,7 @@ class TestPlayerModel:
     ):
         async with db_sessionmaker() as session:
             session.delete(player)
+            await session.commit()
             session.refresh(player)
             session.refresh(game_with_turn_player_id)
             deleted_game = await session.get(
