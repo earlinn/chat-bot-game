@@ -1,6 +1,6 @@
 import enum
 
-SUITS: list[str] = ("♦️", "♠️", "♥️", "♣️")
+SUITS: tuple[str, str, str, str] = ("♦️", "♠️", "♥️", "♣️")
 RANKS: dict[str, int] = {str(number): number for number in range(2, 11)}
 RANKS.update({"J": 10, "Q": 10, "K": 10, "A": 11})
 CARDS: dict[str, int] = {
@@ -15,7 +15,7 @@ class GameStatus(enum.StrEnum):
 
 
 class GameStage(enum.StrEnum):
-    WAITING = "waiting"
+    WAITING_FOR_PLAYERS_TO_JOIN = "waiting_for_players_to_join"
     BETTING = "betting"
     PLAYERHIT = "playerhit"
     DILLERHIT = "dillerhit"

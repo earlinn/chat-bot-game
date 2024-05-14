@@ -87,9 +87,10 @@ class TgApiAccessor(BaseAccessor):
             return updates
 
     async def send_message(
-        self, message: SendMessage, reply_markup: str | None = None
+        self, message: SendMessage, any_buttons_present: bool = False
     ) -> None:
-        if reply_markup is not None:
+        if any_buttons_present:
+            reply_markup = message.reply_markup.json_reply_markup_keyboard()
             params = {
                 "chat_id": message.chat_id,
                 "text": message.text,

@@ -2,6 +2,7 @@ import asyncio
 import typing
 from logging import getLogger
 
+from app.store.tg_api.accessor import TgApiAccessor
 from app.store.tg_api.dataclasses import (
     BotManagerContext,
     InlineKeyboardButton,
@@ -42,6 +43,11 @@ class BotManager:
         """Подключается к app и к логгеру."""
         self.app = app
         self.logger = getLogger("bot manager")
+        self.background_tasks = set()
+
+    @property
+    def tg_api(self) -> TgApiAccessor:
+        return self.app.store.tg_api
 
     async def _start_timer(
         self, coro: typing.Coroutine, seconds: int = TIMER_DELAY_IN_SECONDS
@@ -71,8 +77,7 @@ class BotManager:
                 ]
             ),
         )
-        reply_markup = button_message.reply_markup.json_reply_markup_keyboard()
-        await self.app.store.tg_api.send_message(button_message, reply_markup)
+        await self.tg_api.send_message(button_message, any_buttons_present=True)
 
     async def say_hi_and_wait(self, context: BotManagerContext):
         """Печатает приветствие и кнопку 'Посмотреть правила игры',
@@ -89,22 +94,20 @@ class BotManager:
                 ]
             ),
         )
-        reply_markup = button_message.reply_markup.json_reply_markup_keyboard()
-        await self.app.store.tg_api.send_message(button_message, reply_markup)
+        await self.tg_api.send_message(button_message, any_buttons_present=True)
 
     async def wait_next_game(self, context: BotManagerContext):
         """Предлагает дождаться окончания текущей игры."""
         button_message = SendMessage(
             chat_id=context.chat_id, text=WAITING_MESSAGE
         )
-        await self.app.store.tg_api.send_message(button_message)
+        await self.tg_api.send_message(button_message)
 
     async def join_new_game(self, context: BotManagerContext):
         """Печатает сообщение о возможности присоединиться к новой игре
         в течение определенного времени и кнопку 'Присоединиться к игре',
         затем запускает таймер.
         """
-        background_tasks = set()
         button_message = SendMessage(
             chat_id=context.chat_id,
             text=START_TIMER_MESSAGE,
@@ -117,20 +120,19 @@ class BotManager:
                 ]
             ),
         )
-        reply_markup = button_message.reply_markup.json_reply_markup_keyboard()
-        await self.app.store.tg_api.send_message(button_message, reply_markup)
+        await self.tg_api.send_message(button_message, any_buttons_present=True)
 
         # More info: https://docs.astral.sh/ruff/rules/asyncio-dangling-task/
         timer_task = asyncio.create_task(
             self._start_timer(self.start_betting_stage(context))
         )
         self.logger.info(timer_task)
-        background_tasks.add(timer_task)
-        timer_task.add_done_callback(background_tasks.discard)
+        self.background_tasks.add(timer_task)
+        timer_task.add_done_callback(self.background_tasks.discard)
 
     async def player_joined(self, context: BotManagerContext):
         """Печатает сообщение о том, что игрок присоединился к игре."""
-        await self.app.store.tg_api.send_message(
+        await self.tg_api.send_message(
             SendMessage(
                 chat_id=context.chat_id,
                 text=JOINED_GAME_MESSAGE.format(username=context.username),
@@ -141,7 +143,7 @@ class BotManager:
         """Печатает сообщение о том, что нельзя присоединиться
         к несуществующей игре.
         """
-        await self.app.store.tg_api.send_message(
+        await self.tg_api.send_message(
             SendMessage(
                 chat_id=context.chat_id,
                 text=JOIN_NON_EXISTENT_GAME_ERROR,
@@ -181,12 +183,11 @@ class BotManager:
                 ]
             ),
         )
-        reply_markup = button_message.reply_markup.json_reply_markup_keyboard()
-        await self.app.store.tg_api.send_message(button_message, reply_markup)
+        await self.tg_api.send_message(button_message, any_buttons_present=True)
 
     # TODO: пока не используется, но возможно пригодится в будущем
     async def unknown_command(self, context: BotManagerContext):
         """Печатает сообщение о том, что команда неизвестна."""
-        await self.app.store.tg_api.send_message(
+        await self.tg_api.send_message(
             SendMessage(chat_id=context.chat_id, text=UNKNOWN_COMMAND_MESSAGE)
         )

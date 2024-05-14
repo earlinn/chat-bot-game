@@ -9,6 +9,8 @@ from app.store.database.sqlalchemy_base import BaseModel
 if typing.TYPE_CHECKING:
     from app.web.app import Application
 
+BM = typing.TypeVar("BM", bound=BaseModel)
+
 
 class BaseAccessor:
     def __init__(self, app: "Application", *args, **kwargs):
@@ -26,10 +28,10 @@ class BaseAccessor:
 
     async def get_or_create(
         self,
-        model: BaseModel,
+        model: BM,
         get_params: list[BinaryExpression],
         create_params: dict[str, typing.Any],
-    ) -> tuple[bool, BaseModel]:
+    ) -> tuple[bool, BM]:
         """Базовый метод для поиска экземпляра модели и его создания, если
         он не обнаружен при поиске.
         Возвращает кортеж, состоящий из created (тип bool) и экземпляра модели.

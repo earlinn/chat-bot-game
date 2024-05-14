@@ -39,7 +39,7 @@ class Router:
         в зависимости от результата вызывает различные методы BotManager.
         """
         chat: Chat = message.chat
-        bot_context: BotManagerContext = await self._get_bot_context(chat.id)
+        bot_context: BotManagerContext = await self._get_bot_context(chat)
         current_game: (
             GameModel | None
         ) = await self.store.games.get_active_game_by_chat_id(chat.id)
@@ -57,7 +57,7 @@ class Router:
         """
         query: str = callback_query.data
         chat: Chat = callback_query.message.chat
-        bot_context: BotManagerContext = await self._get_bot_context(chat.id)
+        bot_context: BotManagerContext = await self._get_bot_context(chat)
         current_game: (
             GameModel | None
         ) = await self.store.games.get_active_game_by_chat_id(chat.id)
@@ -71,7 +71,7 @@ class Router:
             query == JOIN_GAME_CALLBACK
             or (
                 query == ADD_PLAYER_CALLBACK
-                and current_game.stage != GameStage.WAITING
+                and current_game.stage != GameStage.WAITING_FOR_PLAYERS_TO_JOIN
             )
         ):
             await self.store.bots_manager.wait_next_game(bot_context)
@@ -97,14 +97,14 @@ class Router:
                 bot_context
             )
 
-        # Игра на стадии WAITING, запущен таймер для присоединения игроков,
-        # кто-то нажимает на "Присоединиться к игре"
+        # Игра на стадии WAITING_FOR_PLAYERS_TO_JOIN, запущен таймер для
+        # присоединения игроков, кто-то нажимает на "Присоединиться к игре"
         # Что делаем: добавляем еще одного игрока в эту игру, т.е. получаем
         # игрока, создаем для него геймплей и выводим сообщение, что он в игре
         elif (
             query == ADD_PLAYER_CALLBACK
             and current_game
-            and current_game.stage == GameStage.WAITING
+            and current_game.stage == GameStage.WAITING_FOR_PLAYERS_TO_JOIN
         ):
             player: PlayerModel = await self._get_player_with_balance(
                 callback_query, chat.id
@@ -114,10 +114,10 @@ class Router:
             await self.store.bots_manager.player_joined(bot_context)
 
     async def _get_bot_context(
-        self, chat_id: int, username: str | None = None
+        self, chat: Chat, username: str | None = None
     ) -> BotManagerContext:
         """Собирает контекст в экземпляр класса BotManagerContext."""
-        return BotManagerContext(chat_id, username)
+        return BotManagerContext(chat.id, username)
 
     async def _get_player_with_balance(
         self, callback_query: CallbackQuery, chat_id: int
@@ -157,7 +157,7 @@ class Router:
             get_params=[
                 GameModel.chat_id == chat_id,
                 GameModel.status == GameStatus.ACTIVE,
-                GameModel.stage == GameStage.WAITING,
+                GameModel.stage == GameStage.WAITING_FOR_PLAYERS_TO_JOIN,
             ],
             create_params={
                 "chat_id": chat_id,
