@@ -4,6 +4,7 @@ from typing import Annotated
 
 from sqlalchemy import (
     ARRAY,
+    BigInteger,
     CheckConstraint,
     ForeignKey,
     String,
@@ -13,15 +14,10 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.store.database.sqlalchemy_base import BaseModel
-from app.web.utils import TgUsernameError
+from app.web.exceptions import TgUsernameError
 
 from .const import GameStage, GameStatus, PlayerStatus
 
-# PLAYER_BET_ERROR: str = "Ставка должна быть положительным числом."
-TG_USERNAME_ERROR: str = (
-    "Username должен иметь длину от 5 до 32 символов, допускаются только "
-    "латинские буквы, цифры и нижнее подчеркивание."
-)
 TG_USERNAME_REGEX: str = r"^[a-zA-Z0-9_]{5,32}$"
 intpk = Annotated[int, mapped_column(primary_key=True)]
 int_unique = Annotated[int, mapped_column(unique=True)]
@@ -51,7 +47,7 @@ class PlayerModel(BaseModel):
     @validates("username")
     def validate_username(self, key: str, value: str):
         if not re.match(TG_USERNAME_REGEX, value):
-            raise TgUsernameError(TG_USERNAME_ERROR)
+            raise TgUsernameError
         return value
 
 
@@ -59,7 +55,7 @@ class BalanceModel(BaseModel):
     __tablename__ = "balances"
 
     id: Mapped[intpk]
-    chat_id: Mapped[int]
+    chat_id: Mapped[int] = mapped_column(BigInteger())
     player_id: Mapped[int] = mapped_column(
         ForeignKey("players.id", ondelete="CASCADE")
     )
@@ -79,10 +75,12 @@ class GameModel(BaseModel):
     __tablename__ = "games"
 
     id: Mapped[intpk]
-    chat_id: Mapped[int]
+    chat_id: Mapped[int] = mapped_column(BigInteger())
     created_at: Mapped[created_at]
     status: Mapped[GameStatus] = mapped_column(default=GameStatus.ACTIVE)
-    stage: Mapped[GameStage] = mapped_column(default=GameStage.BETTING)
+    stage: Mapped[GameStage] = mapped_column(
+        default=GameStage.WAITING_FOR_PLAYERS_TO_JOIN
+    )
     turn_player_id: Mapped[int] = mapped_column(
         ForeignKey("players.id", ondelete="CASCADE"),
         nullable=True,
@@ -90,7 +88,7 @@ class GameModel(BaseModel):
     )
     diller_cards: Mapped[list[str]] = mapped_column(
         ARRAY(String)
-    )  # TODO: json?
+    )  # TODO: make it json after MVP?
 
     gameplays: Mapped[list["GamePlayModel"]] = relationship(
         back_populates="game"
@@ -114,9 +112,9 @@ class GamePlayModel(BaseModel):
     player_status: Mapped[PlayerStatus] = mapped_column(
         default=PlayerStatus.BETTING
     )
-    player_cards: Mapped[list[str]] = mapped_column(
+    player_cards: Mapped[list[str] | None] = mapped_column(
         ARRAY(String)
-    )  # TODO: json?
+    )  # TODO: make it json after MVP?
 
     game: Mapped["GameModel"] = relationship(back_populates="gameplays")
     player: Mapped["PlayerModel"] = relationship(back_populates="gameplays")

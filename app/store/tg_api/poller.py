@@ -2,13 +2,16 @@ import asyncio
 from asyncio import Future, Task
 
 from app.store import Store
-from app.store.tg_api.dataclasses import Update
-from app.web.utils import TgGetUpdatesError
+from app.web.exceptions import TgGetUpdatesError
+
+from .dataclasses import Update
+from .router import Router
 
 
 class Poller:
     def __init__(self, store: Store) -> None:
         self.store = store
+        self.router: Router = Router(self.store)
         self.is_running = False
         self.poll_task: Task | None = None
 
@@ -42,6 +45,7 @@ class Poller:
                     offset=offset, timeout=30
                 )
                 if res:
+                    await self.router.route_updates(res)
                     offset = res[-1].update_id + 1
             except TgGetUpdatesError:
                 self.is_running = False

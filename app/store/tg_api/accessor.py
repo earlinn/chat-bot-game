@@ -6,9 +6,9 @@ from aiohttp import TCPConnector
 from aiohttp.client import ClientSession
 
 from app.base.base_accessor import BaseAccessor
-from app.store.tg_api.dataclasses import Message, Update
+from app.store.tg_api.dataclasses import SendMessage, Update
 from app.store.tg_api.poller import Poller
-from app.web.utils import TgGetUpdatesError
+from app.web.exceptions import TgGetUpdatesError
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application
@@ -73,25 +73,37 @@ class TgApiAccessor(BaseAccessor):
                     data["error_code"],
                     data["description"],
                 )
-                raise TgGetUpdatesError
+                raise TgGetUpdatesError(
+                    error_code=data["error_code"],
+                    description=data["description"],
+                )
 
             if not data.get("result"):
                 return []
 
             updates: list[Update] = [
-                Update.from_dict(update)
-                for update in data.get("result")
-                if update.get("message")
+                Update.from_dict(update) for update in data.get("result")
             ]
-            await self.app.store.bots_manager.run_echo(updates)
             return updates
 
-    async def send_message(self, message: Message) -> None:
+    async def send_message(
+        self, message: SendMessage, any_buttons_present: bool = False
+    ) -> None:
+        if any_buttons_present:
+            reply_markup = message.reply_markup.json_reply_markup_keyboard()
+            params = {
+                "chat_id": message.chat_id,
+                "text": message.text,
+                "reply_markup": reply_markup,
+            }
+        else:
+            params = {"chat_id": message.chat_id, "text": message.text}
+
         async with self.session.get(
             self._build_query(
                 API_PATH,
                 "sendMessage",
-                params={"chat_id": message.chat_id, "text": message.text},
+                params=params,
             )
         ) as response:
             data = await response.json()

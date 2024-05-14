@@ -27,7 +27,7 @@ class PlayerAddView(AuthRequiredMixin, View):
     @response_schema(PlayerSchema, 201)
     async def post(self):
         username, tg_id = self.data["username"], self.data["tg_id"]
-        player = await self.store.games.create_player(
+        player = await self.store.players.create_player(
             username=username, tg_id=tg_id
         )
         return json_response(data=PlayerSchema().dump(player))
@@ -37,7 +37,7 @@ class PlayerListView(AuthRequiredMixin, View):
     @docs(tags=["players"], summary="Get list of players")
     @response_schema(PlayerListSchema, 200)
     async def get(self):
-        players = await self.store.games.list_players()
+        players = await self.store.players.list_players()
         return json_response(data=PlayerListSchema().dump({"players": players}))
 
 
@@ -54,10 +54,10 @@ class BalanceAddView(AuthRequiredMixin, View):
         # INSERT или UPDATE в таблице "balances" нарушает ограничение внешнего
         # ключа "balances_player_id_fkey" # DETAIL:  Ключ (player_id)=(5)
         # отсутствует в таблице "players".
-        if not await self.store.games.get_player_by_id(id_=player_id):
+        if not await self.store.players.get_player_by_id(id_=player_id):
             raise HTTPNotFound(reason="no such player id")
 
-        balance = await self.store.games.create_player_balance(
+        balance = await self.store.players.create_player_balance(
             chat_id=chat_id, player_id=player_id
         )
         return json_response(data=BalanceSchema().dump(balance))
@@ -72,7 +72,7 @@ class BalanceListView(AuthRequiredMixin, View):
             player_id = int(self.request.query["player_id"])
         except KeyError:
             player_id = None
-        balances = await self.store.games.list_balances(player_id)
+        balances = await self.store.players.list_balances(player_id)
         return json_response(
             data=BalanceListSchema().dump({"balances": balances})
         )

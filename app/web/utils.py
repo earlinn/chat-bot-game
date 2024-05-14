@@ -25,13 +25,3 @@ def error_json_response(
             "data": data or {},
         },
     )
-
-
-class TgGetUpdatesError(Exception):
-    """Вызывается, если получение обновлений методом getUpdates завершилось
-    ошибкой, и в ответе Telegram Bot API присутствует "ok": false.
-    """
-
-
-class TgUsernameError(ValueError):
-    """Вызывается, если username не соответствует правилам Telegram."""

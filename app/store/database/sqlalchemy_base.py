@@ -3,7 +3,9 @@ from sqlalchemy.orm import DeclarativeBase
 
 class BaseModel(DeclarativeBase):
     repr_cols_num: int = 3  # сколько колонок вывести на печать
-    repr_cols: tuple[str] = ()  # для вывода дополнительных колонок, их названия
+
+    # для вывода дополнительных колонок, их названия
+    repr_cols: tuple[str, ...] = ()
 
     def __repr__(self) -> str:
         """Показывает значения нужных полей при печати модели."""
