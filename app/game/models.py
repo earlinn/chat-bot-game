@@ -82,7 +82,9 @@ class GameModel(BaseModel):
     chat_id: Mapped[int] = mapped_column(BigInteger())
     created_at: Mapped[created_at]
     status: Mapped[GameStatus] = mapped_column(default=GameStatus.ACTIVE)
-    stage: Mapped[GameStage] = mapped_column(default=GameStage.WAITING)
+    stage: Mapped[GameStage] = mapped_column(
+        default=GameStage.WAITING_FOR_PLAYERS_TO_JOIN
+    )
     turn_player_id: Mapped[int] = mapped_column(
         ForeignKey("players.id", ondelete="CASCADE"),
         nullable=True,

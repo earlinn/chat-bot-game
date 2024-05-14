@@ -114,7 +114,7 @@ class GameAccessor(BaseAccessor):
             and_(
                 GameModel.chat_id == chat_id,
                 GameModel.status == GameStatus.ACTIVE,
-                GameModel.stage == GameStage.WAITING,
+                GameModel.stage == GameStage.WAITING_FOR_PLAYERS_TO_JOIN,
             )
         )
         async with self.app.database.session() as session:
