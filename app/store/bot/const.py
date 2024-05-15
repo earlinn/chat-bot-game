@@ -26,16 +26,21 @@ JOIN_NON_EXISTENT_GAME_ERROR = (
     "'Начать новую игру'."
 )
 END_TIMER_MESSAGE = (
-    "Игра началась.\n"
+    "Игра началась.\nИгроки: {players}\n"
     "Каждый игрок должен сделать ставку, нажав на одну из кнопок ниже. "
     "Ставка делается один раз за игру и не может быть изменена."
 )
-PLAYER_HAVE_BET_MESSAGE = "Игрок {player} сделал ставку {bet}."
+PLAYER_HAVE_BET_MESSAGE = "{player} ставит {bet} очков."
 GAME_PLAYERHIT_STAGE_MESSAGE = (
     "Ставки сделаны. "
-    "Теперь вы можете взять себе карту или отказаться брать новые карты."
+    "Теперь вы можете взять себе карту или отказаться брать новые карты.\n\n"
+    "Карты на руках:\n\n{cards_str}"
 )
 UNKNOWN_MESSAGE = "Неизвестная команда"
+
+# Cards strings
+PLAYER_CARDS_STR = "{username}:  {player_cards}"
+DILLER_CARDS_STR = "\nДиллер:  {diller_cards}"
 
 # Buttons
 GAME_START_BUTTON = "Начать новую игру"

@@ -57,12 +57,12 @@ class BotManager:
 
     async def handle_active_game(
         self,
-        game: GameModel,
         query: CallbackQuery,
         context: BotContext,
     ) -> None:
         """Обрабатывает callback_query при наличии активной игры в чате."""
         query_message: str = query.data
+        game = context.current_game
 
         if game.stage == GameStage.WAITING_FOR_PLAYERS_TO_JOIN:
             await self._handle_game_waiting_stage(game, query, context)
@@ -118,7 +118,7 @@ class BotManager:
 
         if query_message == const.BET_10_CALLBACK:
             all_players_have_bet: bool = (
-                await self.game_manager.update_gameplay_bet_and_status(
+                await self.game_manager.update_gameplay_bet_status_and_cards(
                     game.id, query, 10
                 )
             )
@@ -126,7 +126,7 @@ class BotManager:
             await self._say_player_have_bet(context)
         elif query_message == const.BET_25_CALLBACK:
             all_players_have_bet: bool = (
-                await self.game_manager.update_gameplay_bet_and_status(
+                await self.game_manager.update_gameplay_bet_status_and_cards(
                     game.id, query, 25
                 )
             )
@@ -134,7 +134,7 @@ class BotManager:
             await self._say_player_have_bet(context)
         elif query_message == const.BET_50_CALLBACK:
             all_players_have_bet: bool = (
-                await self.game_manager.update_gameplay_bet_and_status(
+                await self.game_manager.update_gameplay_bet_status_and_cards(
                     game.id, query, 50
                 )
             )
@@ -142,7 +142,7 @@ class BotManager:
             await self._say_player_have_bet(context)
         elif query_message == const.BET_100_CALLBACK:
             all_players_have_bet: bool = (
-                await self.game_manager.update_gameplay_bet_and_status(
+                await self.game_manager.update_gameplay_bet_status_and_cards(
                     game.id, query, 100
                 )
             )
@@ -153,12 +153,24 @@ class BotManager:
             pass
 
         if all_players_have_bet:
-            await self.app.store.games.change_active_game_stage(
-                chat_id=context.chat_id, stage=GameStage.PLAYERHIT
+            refreshed_game = (
+                await self.app.store.games.change_active_game_stage(
+                    chat_id=context.chat_id, stage=GameStage.PLAYERHIT
+                )
             )
-            # TODO: стадия игры поменялась, теперь надо раздать каждому игроку
-            # по 2 карты и вывести их в сообщении ниже вместе с кнопками, также
-            # вывести на экран единственную карту диллера
+
+            players_cards: list[str] = [
+                const.PLAYER_CARDS_STR.format(
+                    username=gameplay.player.username,
+                    player_cards=", ".join(gameplay.player_cards),
+                )
+                for gameplay in refreshed_game.gameplays
+            ]
+            diller_card_str = const.DILLER_CARDS_STR.format(
+                diller_cards=", ".join(refreshed_game.diller_cards)
+            )
+            cards_str: str = "\n".join(players_cards) + diller_card_str
+            context.message = cards_str
             await self._say_players_take_cards(context)
 
     async def _handle_game_playerhit_stage(
@@ -314,12 +326,15 @@ class BotManager:
                 chat_id=context.chat_id, stage=GameStage.BETTING
             )
         )
-        players: str = ", ".join(
-            ["@" + player.username for player in current_game.players]
+        players: list[PlayerModel] = [
+            gameplay.player for gameplay in current_game.gameplays
+        ]
+        players_str: str = ", ".join(
+            ["@" + player.username for player in players]
         )
         button_message = SendMessage(
             chat_id=context.chat_id,
-            text=const.END_TIMER_MESSAGE.format(players=players),
+            text=const.END_TIMER_MESSAGE.format(players=players_str),
             reply_markup=InlineKeyboardMarkup(
                 [
                     InlineKeyboardButton(
@@ -356,7 +371,9 @@ class BotManager:
     async def _say_players_take_cards(self, context: BotContext):
         button_message = SendMessage(
             chat_id=context.chat_id,
-            text=const.GAME_PLAYERHIT_STAGE_MESSAGE,
+            text=const.GAME_PLAYERHIT_STAGE_MESSAGE.format(
+                cards_str=context.message
+            ),
             reply_markup=InlineKeyboardMarkup(
                 [
                     InlineKeyboardButton(

@@ -10,13 +10,11 @@ from app.web.app import View
 from app.web.mixins import AuthRequiredMixin
 from app.web.utils import json_response
 
-from .const import GameStage
 from .schemes import (
     BalanceListSchema,
     BalanceSchema,
     GameListSchema,
     GameSchema,
-    GameUpdateStageSchema,
     PlayerIdSchema,
     PlayerListSchema,
     PlayerSchema,
@@ -98,17 +96,3 @@ class GameListView(AuthRequiredMixin, View):
     async def get(self):
         games = await self.store.games.list_games()
         return json_response(data=GameListSchema().dump({"games": games}))
-
-
-# добавила, чтобы протестировать метод change_active_game_stage в GameAccessor,
-# когда вырубили электричество и запуск этого метода через бота был недоступен
-class GameUpdateStageView(AuthRequiredMixin, View):
-    @docs(tags=["games"], summary="Update stage from WAITING to BETTING")
-    @request_schema(GameUpdateStageSchema)
-    @response_schema(GameUpdateStageSchema, 200)
-    async def post(self):
-        chat_id = self.data["chat_id"]
-        game = await self.store.games.change_active_game_stage(
-            chat_id=chat_id, stage=GameStage.BETTING
-        )
-        return json_response(data=GameUpdateStageSchema().dump(game))

@@ -5,7 +5,6 @@ from .views import (
     BalanceListView,
     GameAddView,
     GameListView,
-    GameUpdateStageView,
     PlayerAddView,
     PlayerListView,
 )
@@ -17,7 +16,6 @@ if typing.TYPE_CHECKING:
 def setup_routes(app: "Application"):
     app.router.add_view("/game.add", GameAddView)
     app.router.add_view("/game.list", GameListView)
-    app.router.add_view("/game.update.stage", GameUpdateStageView)
     app.router.add_view("/game.player.add", PlayerAddView)
     app.router.add_view("/game.player.list", PlayerListView)
     app.router.add_view("/game.player.balance.add", BalanceAddView)

@@ -1,10 +1,11 @@
 from collections.abc import Sequence
+from typing import Any
 
 from sqlalchemy import and_, select, update
 from sqlalchemy.orm import selectinload
 
 from app.base.base_accessor import BaseAccessor
-from app.game.const import GameStage, GameStatus, PlayerStatus
+from app.game.const import GameStage, GameStatus
 from app.game.models import BalanceModel, GameModel, GamePlayModel, PlayerModel
 
 
@@ -95,10 +96,18 @@ class GameAccessor(BaseAccessor):
         self, chat_id: int
     ) -> GameModel | None:
         """Ищет в определенном чате активную игру."""
-        query = select(GameModel).where(
-            and_(
-                GameModel.chat_id == chat_id,
-                GameModel.status == GameStatus.ACTIVE,
+        query = (
+            select(GameModel)
+            .where(
+                and_(
+                    GameModel.chat_id == chat_id,
+                    GameModel.status == GameStatus.ACTIVE,
+                )
+            )
+            .options(
+                selectinload(GameModel.gameplays).subqueryload(
+                    GamePlayModel.player
+                )
             )
         )
         async with self.app.database.session() as session:
@@ -135,7 +144,9 @@ class GameAccessor(BaseAccessor):
             )
             .values(stage=stage)
             .returning(GameModel)
-        ).options(selectinload(GameModel.players))
+        ).options(
+            selectinload(GameModel.gameplays).subqueryload(GamePlayModel.player)
+        )
 
         async with self.app.database.session() as session:
             game: GameModel = await session.scalar(query)
@@ -186,14 +197,14 @@ class GamePlayAccessor(BaseAccessor):
         async with self.app.database.session() as session:
             return await session.scalar(query)
 
-    async def change_player_bet_and_status(
-        self, gameplay_id: int, bet: int
+    async def change_gameplay_fields(
+        self, gameplay_id: int, new_values: dict[str, Any]
     ) -> GamePlayModel:
-        """Меняет размер ставки игрока в игре."""
+        """Меняет значения полей gameplay."""
         query = (
             update(GamePlayModel)
             .where(GamePlayModel.id == gameplay_id)
-            .values(player_bet=bet, player_status=PlayerStatus.TAKING)
+            .values(**new_values)
             .returning(GamePlayModel)
         )
         async with self.app.database.session() as session:

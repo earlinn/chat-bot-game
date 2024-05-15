@@ -2,7 +2,7 @@ import random
 import typing
 from logging import getLogger
 
-from app.game.const import CARDS, GameStage, GameStatus
+from app.game.const import CARDS, GameStage, GameStatus, PlayerStatus
 from app.game.models import BalanceModel, GameModel, GamePlayModel, PlayerModel
 from app.store.tg_api.dataclasses import CallbackQuery
 
@@ -78,7 +78,7 @@ class GameManager:
         self.logger.info("Gameplay: %s, created: %s", gameplay, created)
         return gameplay
 
-    async def update_gameplay_bet_and_status(
+    async def update_gameplay_bet_status_and_cards(
         self, game_id: int, query: CallbackQuery, bet_value: int
     ) -> bool:
         """Находит геймплей, обновляет в нем ставку игрока и определяет,
@@ -92,7 +92,12 @@ class GameManager:
                 game_id, player.id
             )
         )
-        await self.app.store.gameplays.change_player_bet_and_status(
-            gameplay.id, bet_value
+        new_gameplay_values = {
+            "player_bet": bet_value,
+            "player_status": PlayerStatus.TAKING,
+            "player_cards": [random.choice(list(CARDS)) for _ in range(2)],
+        }
+        await self.app.store.gameplays.change_gameplay_fields(
+            gameplay.id, new_gameplay_values
         )
         return await self.app.store.games.check_all_players_have_bet(game_id)

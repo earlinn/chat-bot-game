@@ -63,8 +63,9 @@ class Router:
         )
 
         if current_game:
+            bot_context.current_game = current_game
             await self.store.bots_manager.handle_active_game(
-                current_game, callback_query, bot_context
+                callback_query, bot_context
             )
         else:
             await self.store.bots_manager.handle_no_game_case(
@@ -74,8 +75,10 @@ class Router:
     async def _get_bot_context(
         self,
         chat: Chat,
+        current_game: GameModel | None = None,
         username: str | None = None,
         bet_value: int | None = None,
+        message: str | None = None,
     ) -> BotContext:
         """Собирает контекст в экземпляр класса BotContext."""
-        return BotContext(chat.id, username, bet_value)
+        return BotContext(chat.id, current_game, username, bet_value, message)
