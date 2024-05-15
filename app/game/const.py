@@ -7,6 +7,8 @@ CARDS: dict[str, int] = {
     card + suit: rank for card, rank in RANKS.items() for suit in SUITS
 }
 
+BLACK_JACK = 21
+
 
 class GameStatus(enum.StrEnum):
     ACTIVE = "active"

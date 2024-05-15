@@ -2,7 +2,13 @@ import random
 import typing
 from logging import getLogger
 
-from app.game.const import CARDS, GameStage, GameStatus, PlayerStatus
+from app.game.const import (
+    BLACK_JACK,
+    CARDS,
+    GameStage,
+    GameStatus,
+    PlayerStatus,
+)
 from app.game.models import BalanceModel, GameModel, GamePlayModel, PlayerModel
 from app.store.tg_api.dataclasses import CallbackQuery
 
@@ -79,18 +85,16 @@ class GameManager:
         return gameplay
 
     async def update_gameplay_bet_status_and_cards(
-        self, game_id: int, query: CallbackQuery, bet_value: int
+        self, game: GameModel, query: CallbackQuery, bet_value: int
     ) -> bool:
-        """Находит геймплей, обновляет в нем ставку игрока и определяет,
-        все ли игроки сделали ставку.
+        """Находит геймплей, обновляет в нем статус и ставку игрока, проверяет,
+        все ли игроки сделали ставку, и возвращает результат проверки.
         """
         player: PlayerModel = await self.app.store.players.get_player_by_tg_id(
             query.from_.id
         )
-        gameplay: GamePlayModel = (
-            await self.app.store.gameplays.get_gameplay_by_game_and_player(
-                game_id, player.id
-            )
+        gameplay: GamePlayModel = next(
+            filter(lambda x: x.player.id == player.id, game.gameplays)
         )
         new_gameplay_values = {
             "player_bet": bet_value,
@@ -100,4 +104,54 @@ class GameManager:
         await self.app.store.gameplays.change_gameplay_fields(
             gameplay.id, new_gameplay_values
         )
-        return await self.app.store.games.check_all_players_have_bet(game_id)
+        return await self.app.store.games.check_all_players_have_bet(game.id)
+
+    async def take_a_card(
+        self, game: GameModel, query: CallbackQuery
+    ) -> tuple[bool, list[str]]:
+        """Добавляет игроку в геймплей еще одну карту, проверяет превышение
+        21 очка и возвращает результат проверки вместе со списком карт.
+        """
+        exceeded = False
+        player: PlayerModel = await self.app.store.players.get_player_by_tg_id(
+            query.from_.id
+        )
+        gameplay: GamePlayModel = next(
+            filter(lambda x: x.player.id == player.id, game.gameplays)
+        )
+        gameplay.player_cards.append(random.choice(list(CARDS)))
+        updated_cards: list[str] = gameplay.player_cards
+        score = sum(CARDS[card] for card in updated_cards)
+
+        # TODO: обработать ситуацию с превращением туза в 1 вместо 11
+        if score > BLACK_JACK:
+            exceeded = True
+            new_gameplay_values = {
+                "player_status": PlayerStatus.EXCEEDED,
+                "player_cards": updated_cards,
+            }
+        else:
+            new_gameplay_values = {"player_cards": updated_cards}
+
+        await self.app.store.gameplays.change_gameplay_fields(
+            gameplay.id, new_gameplay_values
+        )
+        return exceeded, updated_cards
+
+    async def stop_take_cards(
+        self, game: GameModel, query: CallbackQuery
+    ) -> list[str]:
+        """Меняет статус геймплея на STANDING (игрок больше не берет карты)
+        и возвращает список его карт.
+        """
+        player: PlayerModel = await self.app.store.players.get_player_by_tg_id(
+            query.from_.id
+        )
+        gameplay: GamePlayModel = next(
+            filter(lambda x: x.player.id == player.id, game.gameplays)
+        )
+        new_gameplay_values = {"player_status": PlayerStatus.STANDING}
+        await self.app.store.gameplays.change_gameplay_fields(
+            gameplay.id, new_gameplay_values
+        )
+        return gameplay.player_cards

@@ -26,6 +26,7 @@ class TestPlayerModel:
             await session.commit()
 
         assert isinstance(game.created_at, datetime)
+        # может падать в определенные часы из-за разницы часовых поясов
         assert game.created_at.date() == current_date
 
     async def test_default_status(

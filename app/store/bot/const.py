@@ -1,5 +1,5 @@
 # Timer time
-TIMER_DELAY_IN_SECONDS = 30
+TIMER_DELAY_IN_SECONDS = 1
 
 # URLs
 GAME_RULES_URL = "https://ru.wikihow.com/играть-в-блэкджек"
@@ -36,6 +36,9 @@ GAME_PLAYERHIT_STAGE_MESSAGE = (
     "Теперь вы можете взять себе карту или отказаться брать новые карты.\n\n"
     "Карты на руках:\n\n{cards_str}"
 )
+PLAYER_EXCEEDED_MESSAGE = "У {player} более 21 очка, на руках: {cards}"
+PLAYER_NOT_EXCEEDED_MESSAGE = "{player} берет еще карту, на руках: {cards}"
+PLAYER_STOP_TAKING_MESSAGE = "{player} больше не берет карты, на руках: {cards}"
 UNKNOWN_MESSAGE = "Неизвестная команда"
 
 # Cards strings

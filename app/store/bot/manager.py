@@ -183,6 +183,7 @@ class BotManager:
         await self.tg_api.send_message(button_message, any_buttons_present=True)
 
     async def say_player_have_bet(self, context: BotContext):
+        """Печатает сообщение, что игрок такой-то сделал ставку такую-то."""
         await self.tg_api.send_message(
             SendMessage(
                 chat_id=context.chat_id,
@@ -193,6 +194,9 @@ class BotManager:
         )
 
     async def say_players_take_cards(self, context: BotContext):
+        """Печатает сообщение, что ставки сделаны, показывает карты всех игроков
+        и диллера, выводит кнопки 'Взять карту' и 'Достаточно карт'.
+        """
         button_message = SendMessage(
             chat_id=context.chat_id,
             text=const.GAME_PLAYERHIT_STAGE_MESSAGE.format(
@@ -212,3 +216,53 @@ class BotManager:
             ),
         )
         await self.tg_api.send_message(button_message, any_buttons_present=True)
+
+    async def say_player_exceeded(self, context: BotContext):
+        """Печатает сообщение, что игрок превысил 21 очко, и показывает
+        его карты.
+        """
+        await self.tg_api.send_message(
+            SendMessage(
+                chat_id=context.chat_id,
+                text=const.PLAYER_EXCEEDED_MESSAGE.format(
+                    player=context.username, cards=context.message
+                ),
+            )
+        )
+
+    async def say_player_not_exceeded(self, context: BotContext):
+        """Печатает сообщение, что игрок взял карту, и показывает его карты
+        вместе с кнопками 'Взять карту' и 'Достаточно карт'.
+        """
+        button_message = SendMessage(
+            chat_id=context.chat_id,
+            text=const.PLAYER_NOT_EXCEEDED_MESSAGE.format(
+                player=context.username, cards=context.message
+            ),
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    InlineKeyboardButton(
+                        text=const.TAKE_CARD_BUTTON,
+                        callback_data=const.TAKE_CARD_CALLBACK,
+                    ),
+                    InlineKeyboardButton(
+                        text=const.STOP_TAKING_BUTTON,
+                        callback_data=const.STOP_TAKING_CALLBACK,
+                    ),
+                ]
+            ),
+        )
+        await self.tg_api.send_message(button_message, any_buttons_present=True)
+
+    async def say_player_stopped_taking(self, context: BotContext):
+        """Печатает сообщение, что игрок закончил брать карты,
+        и показывает его карты.
+        """
+        await self.tg_api.send_message(
+            SendMessage(
+                chat_id=context.chat_id,
+                text=const.PLAYER_STOP_TAKING_MESSAGE.format(
+                    player=context.username, cards=context.message
+                ),
+            )
+        )

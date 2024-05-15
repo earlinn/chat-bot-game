@@ -139,7 +139,7 @@ class BotHandler:
         context.bet_value = bet_value
         await self.bot_manager.say_player_have_bet(context)
         return await self.game_manager.update_gameplay_bet_status_and_cards(
-            game.id, query, bet_value
+            game, query, bet_value
         )
 
     async def _handle_playerhit_initial(self, context: BotContext) -> None:
@@ -170,16 +170,21 @@ class BotHandler:
     ) -> None:
         """Обрабатывает игру в состоянии, когда игроки берут карты."""
         query_message: str = query.data
+        context.username = query.from_.username
 
         if query_message == const.TAKE_CARD_CALLBACK:
-            # TODO: проверить, не превысил ли игрок 21, если да, то меняем
-            # в его геймплее статус на EXCEEDED и бот пишет ему "У {username}
-            # более 21 очка, карты на руках: {его карты}"
-            pass
+            exceeded, cards = await self.game_manager.take_a_card(game, query)
+            context.message = ", ".join(cards)
+            if exceeded:
+                await self.bot_manager.say_player_exceeded(context)
+            else:
+                await self.bot_manager.say_player_not_exceeded(context)
+
         elif query_message == const.STOP_TAKING_CALLBACK:
-            # TODO: меняем в геймплее игрока его статус на STANDING и пишем
-            # "{username} больше не берет карты, карты на руках: {его карты}"
-            pass
+            cards = await self.game_manager.stop_take_cards(game, query)
+            context.message = ", ".join(cards)
+            await self.bot_manager.say_player_stopped_taking(context)
+
         else:
             # TODO: написать, что кнопка не соответствует стадии игры
             pass
