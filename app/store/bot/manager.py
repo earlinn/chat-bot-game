@@ -19,7 +19,8 @@ if typing.TYPE_CHECKING:
     from app.web.app import Application
 
 
-# TODO: after MVP make Worker class with asyncio.Queue
+# TODO: вынести все обработчики в новый класс, типа BotHandler или GameHandler,
+# а в BotManager оставить только прокидывание сообщений и кнопок.
 class BotManager:
     def __init__(self, app: "Application"):
         """Подключается к app и к логгеру."""
@@ -36,56 +37,124 @@ class BotManager:
         return self.app.store.game_manager
 
     async def handle_no_game_case(
-        self, query: CallbackQuery, bot_context: BotContext
+        self, query: CallbackQuery, context: BotContext
     ) -> None:
         """Обрабатывает callback_query при отсутствии активной игры в чате."""
         query_message: str = query.data
 
         if query_message == const.ADD_PLAYER_CALLBACK:
-            await self._say_join_non_existent_game_fail(bot_context)
+            await self._say_join_non_existent_game_fail(context)
 
         elif query_message == const.JOIN_GAME_CALLBACK:
             player: PlayerModel = await self.game_manager.get_player(
-                query.from_.id, query.from_.username, bot_context.chat_id
+                query.from_.id, query.from_.username, context.chat_id
             )
-            game: GameModel = await self.game_manager.get_game(
-                bot_context.chat_id
-            )
+            game: GameModel = await self.game_manager.get_game(context.chat_id)
             await self.game_manager.get_gameplay(game.id, player.id)
-            await self._say_join_new_game(bot_context)
-            bot_context.username = player.username
-            await self._say_player_joined(bot_context)
+            await self._say_join_new_game(context)
+            context.username = player.username
+            await self._say_player_joined(context)
 
     async def handle_active_game(
         self,
         game: GameModel,
         query: CallbackQuery,
-        bot_context: BotContext,
+        context: BotContext,
     ) -> None:
         """Обрабатывает callback_query при наличии активной игры в чате."""
         query_message: str = query.data
 
         if game.stage == GameStage.WAITING_FOR_PLAYERS_TO_JOIN:
-            await self._handle_game_waiting_stage(game, query, bot_context)
+            await self._handle_game_waiting_stage(game, query, context)
+        elif game.stage == GameStage.BETTING:
+            await self._handle_game_betting_stage(game, query, context)
         elif (
             query_message == const.JOIN_GAME_CALLBACK
             or query_message == const.ADD_PLAYER_CALLBACK
         ):
-            await self._say_wait_next_game(bot_context)
+            await self._say_wait_next_game(context)
 
     async def _handle_game_waiting_stage(
-        self, game: GameModel, query: CallbackQuery, bot_context: BotContext
+        self, game: GameModel, query: CallbackQuery, context: BotContext
     ) -> None:
         """Обрабатывает игру в состоянии ожидания присоединения игроков."""
         query_message: str = query.data
 
         if query_message == const.ADD_PLAYER_CALLBACK:
             player: PlayerModel = await self.game_manager.get_player(
-                query.from_.id, query.from_.username, bot_context.chat_id
+                query.from_.id, query.from_.username, context.chat_id
             )
             await self.game_manager.get_gameplay(game.id, player.id)
-            bot_context.username = player.username
-            await self._say_player_joined(bot_context)
+            context.username = player.username
+            await self._say_player_joined(context)
+
+    # TODO: А если на эти кнопки кто-то нажмет, когда никакой игры вообще нет?
+    # Или она есть, но не на стадии ставок? Или юзер не является игроком?
+    # TODO: Если не все сделали ставки, то ничего не делаем или, как вариант,
+    # запускаем таймер и пишем, что у них 30 секунд на ставки, если они все
+    # не успели за это время, то досрочно завершаем игру и выводим сообщение,
+    # что игра завершена, т.к. не все игроки сделали ставки
+    async def _handle_game_betting_stage(
+        self, game: GameModel, query: CallbackQuery, context: BotContext
+    ) -> None:
+        """Обрабатывает игру в состоянии, когда игроки делают ставки."""
+        query_message: str = query.data
+        context.username = query.from_.username
+
+        if query_message == "make_bet_10":
+            all_players_have_bet: bool = (
+                await self.game_manager.update_gameplay_bet_and_status(
+                    game.id, query, 10
+                )
+            )
+            context.bet_value = 10
+            await self._say_player_have_bet(context)
+        elif query_message == "make_bet_25":
+            all_players_have_bet: bool = (
+                await self.game_manager.update_gameplay_bet_and_status(
+                    game.id, query, 25
+                )
+            )
+            context.bet_value = 25
+            await self._say_player_have_bet(context)
+        elif query_message == "make_bet_50":
+            all_players_have_bet: bool = (
+                await self.game_manager.update_gameplay_bet_and_status(
+                    game.id, query, 50
+                )
+            )
+            context.bet_value = 50
+            await self._say_player_have_bet(context)
+        elif query_message == "make_bet_100":
+            all_players_have_bet: bool = (
+                await self.game_manager.update_gameplay_bet_and_status(
+                    game.id, query, 100
+                )
+            )
+            context.bet_value = 100
+            await self._say_player_have_bet(context)
+
+        if all_players_have_bet:
+            await self.app.store.games.change_active_game_stage(
+                chat_id=context.chat_id, stage=GameStage.PLAYERHIT
+            )
+            await self._say_players_take_cards(context)
+
+    # TODO: если нажата кнопка "Взять карту", то в бот менеджере
+    # подсчитываем сумму его очков, если он превысил 21, то выводим ему
+    # сообщение о переборе очков и меняем в его геймплее статус на
+    # EXCEEDED, также проверяем, остались ли другие игроки,
+    # в зависимости от этого обновляем стадию игры (если все игроки
+    # EXCEEDED, то пропускаем стадию DILLERHIT и сразу переходим
+    # к стадии SUMMARIZING и выводим итоговое сообщение, кто с какими
+    # очками закончил игру);
+    # - если нажата кнопка "Достаточно карт", меняем в геймплее игрока
+    # его статус на STANDING и проверяем, есть ли еще игроки в статусе
+    # TAKING, если таких нет, то меняем стадию игры на DILLERHIT, и бот
+    # берет новые карты, пока не достигнет 17 очков, после этого
+    # переходим к стадии игры SUMMARIZING, обновляем балансы и статусы игроков
+    # (LOST или WON) и выводим итоговое сообщение, кто с какими
+    # очками закончил игру)
 
     async def say_hi_and_play(self, context: BotContext):
         """Печатает приветствие, а также кнопки 'Начать игру' и
@@ -213,32 +282,6 @@ class BotManager:
         button_message = SendMessage(
             chat_id=context.chat_id,
             text=const.END_TIMER_MESSAGE.format(players=players),
-            # TODO:
-            # - добавить к каждой кнопке перехват в роутере, чтобы в геймплее
-            # игрока обновлялся размер ставки (изначально там 1);
-            # - из роутера вызвать метод бот менеджера, который напечатает,
-            # сколько поставил данный игрок, и поменяет ему в его геймплее
-            # статус с BETTING на TAKING, а также проверит, есть ли игроки,
-            # не сделавшие ставку, если есть, то ничего не делаем, просто ждем;
-            # - если все игроки сделали ставку, выводим сообщение, что ставки
-            # сделаны, и кнопки "Взять карту" и "Достаточно карт", также меняем
-            # стадию игры на PLAYERHIT;
-            # - добавить к каждой кнопке перехват в роутере;
-            # - если нажата кнопка "Взять карту", то в бот менеджере
-            # подсчитываем сумму его очков, если он превысил 21, то выводим ему
-            # сообщение о переборе очков и меняем в его геймплее статус на
-            # EXCEEDED, также проверяем, остались ли другие игроки,
-            # в зависимости от этого обновляем стадию игры (если все игроки
-            # EXCEEDED, то пропускаем стадию DILLERHIT и сразу переходим
-            # к стадии SUMMARIZING и выводим итоговое сообщение, кто с какими
-            # очками закончил игру);
-            # - если нажата кнопка "Достаточно карт", меняем в геймплее игрока
-            # его статус на STANDING и проверяем, есть ли еще игроки в статусе
-            # TAKING, если таких нет, то меняем стадию игры на DILLERHIT, и бот
-            # берет новые карты, пока не достигнет 17 очков, после этого
-            # переходим к стадии игры SUMMARIZING, обновляем статусы игроков
-            # (LOST или WON) и выводим итоговое сообщение, кто с какими
-            # очками закончил игру)
             reply_markup=InlineKeyboardMarkup(
                 [
                     InlineKeyboardButton(
@@ -261,3 +304,22 @@ class BotManager:
             ),
         )
         await self.tg_api.send_message(button_message, any_buttons_present=True)
+
+    async def _say_player_have_bet(self, context: BotContext):
+        await self.tg_api.send_message(
+            SendMessage(
+                chat_id=context.chat_id,
+                text=const.PLAYER_HAVE_BET_MESSAGE.format(
+                    player=context.username, bet=context.bet_value
+                ),
+            )
+        )
+
+    # TODO: добавить кнопки, чтобы взять карту или сказать, что хватит
+    async def _say_players_take_cards(self, context: BotContext):
+        await self.tg_api.send_message(
+            SendMessage(
+                chat_id=context.chat_id,
+                text=const.GAME_PLAYERHIT_STAGE_MESSAGE,
+            )
+        )

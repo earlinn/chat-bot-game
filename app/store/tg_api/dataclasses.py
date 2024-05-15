@@ -9,6 +9,7 @@ class BotContext:
 
     chat_id: int
     username: str | None = None
+    bet_value: int | None = None
 
 
 @dataclass

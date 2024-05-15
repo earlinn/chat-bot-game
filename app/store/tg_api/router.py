@@ -72,7 +72,10 @@ class Router:
             )
 
     async def _get_bot_context(
-        self, chat: Chat, username: str | None = None
+        self,
+        chat: Chat,
+        username: str | None = None,
+        bet_value: int | None = None,
     ) -> BotContext:
         """Собирает контекст в экземпляр класса BotContext."""
-        return BotContext(chat.id, username)
+        return BotContext(chat.id, username, bet_value)

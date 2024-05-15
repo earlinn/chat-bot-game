@@ -4,6 +4,7 @@ from logging import getLogger
 
 from app.game.const import CARDS, GameStage, GameStatus
 from app.game.models import BalanceModel, GameModel, GamePlayModel, PlayerModel
+from app.store.tg_api.dataclasses import CallbackQuery
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application
@@ -76,3 +77,22 @@ class GameManager:
         )
         self.logger.info("Gameplay: %s, created: %s", gameplay, created)
         return gameplay
+
+    async def update_gameplay_bet_and_status(
+        self, game_id: int, query: CallbackQuery, bet_value: int
+    ) -> bool:
+        """Находит геймплей, обновляет в нем ставку игрока и определяет,
+        все ли игроки сделали ставку.
+        """
+        player: PlayerModel = await self.app.store.players.get_player_by_tg_id(
+            query.from_.id
+        )
+        gameplay: GamePlayModel = (
+            await self.app.store.gameplays.get_gameplay_by_game_and_player(
+                game_id, player.id
+            )
+        )
+        await self.app.store.gameplays.change_player_bet_and_status(
+            gameplay.id, bet_value
+        )
+        return await self.app.store.games.check_all_players_have_bet(game_id)

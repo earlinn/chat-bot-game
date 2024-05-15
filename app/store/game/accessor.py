@@ -4,7 +4,7 @@ from sqlalchemy import and_, select, update
 from sqlalchemy.orm import selectinload
 
 from app.base.base_accessor import BaseAccessor
-from app.game.const import GameStage, GameStatus
+from app.game.const import GameStage, GameStatus, PlayerStatus
 from app.game.models import BalanceModel, GameModel, GamePlayModel, PlayerModel
 
 
@@ -29,7 +29,6 @@ class PlayerAccessor(BaseAccessor):
         async with self.app.database.session() as session:
             return await session.scalar(query)
 
-    # TODO: больше не используется из-за появления get_or_create в BaseAccessor
     async def get_player_by_tg_id(self, tg_id: int) -> PlayerModel | None:
         """Ищет игрока по telegram id."""
         query = select(PlayerModel).where(PlayerModel.tg_id == tg_id)
@@ -137,10 +136,27 @@ class GameAccessor(BaseAccessor):
             .values(stage=stage)
             .returning(GameModel)
         ).options(selectinload(GameModel.players))
+
         async with self.app.database.session() as session:
-            game = await session.scalar(query)
+            game: GameModel = await session.scalar(query)
             await session.commit()
         return game
+
+    async def check_all_players_have_bet(self, game_id: int) -> bool:
+        """Проверяет, что все игроки сделали ставки."""
+        query = (
+            select(GameModel)
+            .where(GameModel.id == game_id)
+            .options(selectinload(GameModel.gameplays))
+        )
+
+        async with self.app.database.session() as session:
+            game_with_gameplays: GameModel = await session.scalar(query)
+
+        players_have_bet: list[bool] = [
+            play.player_bet >= 10 for play in game_with_gameplays.gameplays
+        ]
+        return all(players_have_bet)
 
 
 class GamePlayAccessor(BaseAccessor):
@@ -157,7 +173,6 @@ class GamePlayAccessor(BaseAccessor):
             await session.commit()
         return gameplay
 
-    # TODO: больше не используется из-за появления get_or_create в BaseAccessor
     async def get_gameplay_by_game_and_player(
         self, game_id: int, player_id: int
     ) -> GamePlayModel | None:
@@ -170,3 +185,18 @@ class GamePlayAccessor(BaseAccessor):
         )
         async with self.app.database.session() as session:
             return await session.scalar(query)
+
+    async def change_player_bet_and_status(
+        self, gameplay_id: int, bet: int
+    ) -> GamePlayModel:
+        """Меняет размер ставки игрока в игре."""
+        query = (
+            update(GamePlayModel)
+            .where(GamePlayModel.id == gameplay_id)
+            .values(player_bet=bet, player_status=PlayerStatus.TAKING)
+            .returning(GamePlayModel)
+        )
+        async with self.app.database.session() as session:
+            gameplay: GamePlayModel = await session.scalar(query)
+            await session.commit()
+        return gameplay
