@@ -8,7 +8,9 @@ from .dataclasses import BotContext
 
 
 class Router:
-    """Распределяет обновления (updates) по нужным хендлерам."""
+    """Класс для распределения обновлений, полученных поллером бота,
+    по нужным хендлерам.
+    """
 
     def __init__(self, store: Store) -> None:
         """Подключается к store и к логгеру."""
@@ -45,7 +47,7 @@ class Router:
         elif message.text == "/start" and current_game:
             await self.store.bots_manager.say_hi_and_wait(bot_context)
         else:
-            await self.store.bots_manager.unknown_command(bot_context)
+            await self.store.bots_manager.say_unknown_command(bot_context)
 
     async def _process_callback_query_update(
         self, callback_query: CallbackQuery
