@@ -43,11 +43,11 @@ class Router:
         )
 
         if message.text == "/start" and not current_game:
-            await self.store.bots_manager.say_hi_and_play(bot_context)
+            await self.store.bot_manager.say_hi_and_play(bot_context)
         elif message.text == "/start" and current_game:
-            await self.store.bots_manager.say_hi_and_wait(bot_context)
+            await self.store.bot_manager.say_hi_and_wait(bot_context)
         else:
-            await self.store.bots_manager.say_unknown_command(bot_context)
+            await self.store.bot_manager.say_unknown_command(bot_context)
 
     async def _process_callback_query_update(
         self, callback_query: CallbackQuery
@@ -66,11 +66,11 @@ class Router:
 
         if current_game:
             bot_context.current_game = current_game
-            await self.store.bots_manager.handle_active_game(
+            await self.store.bot_handler.handle_active_game(
                 callback_query, bot_context
             )
         else:
-            await self.store.bots_manager.handle_no_game_case(
+            await self.store.bot_handler.handle_no_game_case(
                 callback_query, bot_context
             )
 

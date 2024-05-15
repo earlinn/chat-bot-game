@@ -12,6 +12,18 @@ if typing.TYPE_CHECKING:
     from app.web.app import Application
 
 
+# TODO: А если на эти кнопки кто-то нажмет, когда никакой игры вообще нет?
+# Или она есть, но не на стадии ставок? Или юзер не является игроком?
+# Это любых кнопок касается.
+# Наверно надо эти ситуации обрабатывать в хендлерах стадий игры
+# ( _handle_game_waiting_stage,_handle_game_betting_stage и т.п.).
+# Там можно по query_message понять, относится ли эта кнопка к этой стадии
+# (внутри каждого хендлера стадии есть условный оператор, и если кнопка
+# не относится к этой стадии, то она попадет под else, который выведет
+# сообщение, что кнопка не относится к текущей стадии игры).
+# Если да, то является ли юзер, нажавший кнопку игроком в этой игре.
+# Если да, то вправе ли он ее нажимать (например, он уже перестал брать
+# карты, а теперь опять жмет на Взять карту).
 class BotHandler:
     """Класс для обработки запросов к боту."""
 
@@ -22,7 +34,7 @@ class BotHandler:
 
     @property
     def bot_manager(self) -> BotManager:
-        return self.app.store.bots_manager
+        return self.app.store.bot_manager
 
     @property
     def game_manager(self) -> GameManager:
@@ -85,18 +97,6 @@ class BotHandler:
             # TODO: написать, что кнопка не соответствует стадии игры
             pass
 
-    # TODO: А если на эти кнопки кто-то нажмет, когда никакой игры вообще нет?
-    # Или она есть, но не на стадии ставок? Или юзер не является игроком?
-    # Это любых кнопок касается.
-    # Наверно надо эти ситуации обрабатывать в хендлерах стадий игры
-    # ( _handle_game_waiting_stage,_handle_game_betting_stage и т.п.).
-    # Там можно по query_message понять, относится ли эта кнопка к этой стадии
-    # (внутри каждого хендлера стадии есть условный оператор, и если кнопка
-    # не относится к этой стадии, то она попадет под else, который выведет
-    # сообщение, что кнопка не относится к текущей стадии игры).
-    # Если да, то является ли юзер, нажавший кнопку игроком в этой игре.
-    # Если да, то вправе ли он ее нажимать (например, он уже перестал брать
-    # карты, а теперь опять жмет на Взять карту).
     # TODO: Если не все сделали ставки, то ничего не делаем или, как вариант,
     # запускаем таймер и пишем, что у них 30 секунд на ставки, если они все
     # не успели за это время, то досрочно завершаем игру и выводим сообщение,
@@ -109,61 +109,61 @@ class BotHandler:
         context.username = query.from_.username
 
         if query_message == const.BET_10_CALLBACK:
-            all_players_have_bet: bool = (
-                await self.game_manager.update_gameplay_bet_status_and_cards(
-                    game.id, query, 10
-                )
-            )
-            context.bet_value = 10
-            await self.bot_manager.say_player_have_bet(context)
+            bet_value = 10
         elif query_message == const.BET_25_CALLBACK:
-            all_players_have_bet: bool = (
-                await self.game_manager.update_gameplay_bet_status_and_cards(
-                    game.id, query, 25
-                )
-            )
-            context.bet_value = 25
-            await self.bot_manager.say_player_have_bet(context)
+            bet_value = 25
         elif query_message == const.BET_50_CALLBACK:
-            all_players_have_bet: bool = (
-                await self.game_manager.update_gameplay_bet_status_and_cards(
-                    game.id, query, 50
-                )
-            )
-            context.bet_value = 50
-            await self.bot_manager.say_player_have_bet(context)
+            bet_value = 50
         elif query_message == const.BET_100_CALLBACK:
-            all_players_have_bet: bool = (
-                await self.game_manager.update_gameplay_bet_status_and_cards(
-                    game.id, query, 100
-                )
-            )
-            context.bet_value = 100
-            await self.bot_manager.say_player_have_bet(context)
+            bet_value = 100
         else:
             # TODO: написать, что кнопка не соответствует стадии игры
             pass
 
+        all_players_have_bet: bool = await self._handle_bet(
+            game, query, context, bet_value
+        )
         if all_players_have_bet:
-            refreshed_game = (
-                await self.app.store.games.change_active_game_stage(
-                    chat_id=context.chat_id, stage=GameStage.PLAYERHIT
-                )
-            )
+            await self._handle_playerhit_initial(context)
 
-            players_cards: list[str] = [
-                const.PLAYER_CARDS_STR.format(
-                    username=gameplay.player.username,
-                    player_cards=", ".join(gameplay.player_cards),
-                )
-                for gameplay in refreshed_game.gameplays
-            ]
-            diller_card_str = const.DILLER_CARDS_STR.format(
-                diller_cards=", ".join(refreshed_game.diller_cards)
+    async def _handle_bet(
+        self,
+        game: GameModel,
+        query: CallbackQuery,
+        context: BotContext,
+        bet_value: int,
+    ) -> bool:
+        """Обрабатывает ставку отдельного игрока, проверяет, остались ли игроки,
+        не сделавшие ставку, и возвращает результат этой проверки.
+        """
+        context.bet_value = bet_value
+        await self.bot_manager.say_player_have_bet(context)
+        return await self.game_manager.update_gameplay_bet_status_and_cards(
+            game.id, query, bet_value
+        )
+
+    async def _handle_playerhit_initial(self, context: BotContext) -> None:
+        """Меняет стадию ставок на стадию, когда игроки берут дополнительные
+        карты, формирует строку с информацией о картах игроков и диллера
+        и отправляет ее в BotManager, чтобы бот показал ее в чате.
+        """
+        refreshed_game = await self.app.store.games.change_active_game_stage(
+            chat_id=context.chat_id, stage=GameStage.PLAYERHIT
+        )
+
+        players_cards: list[str] = [
+            const.PLAYER_CARDS_STR.format(
+                username=gameplay.player.username,
+                player_cards=", ".join(gameplay.player_cards),
             )
-            cards_str: str = "\n".join(players_cards) + diller_card_str
-            context.message = cards_str
-            await self.bot_manager.say_players_take_cards(context)
+            for gameplay in refreshed_game.gameplays
+        ]
+        diller_card_str = const.DILLER_CARDS_STR.format(
+            diller_cards=", ".join(refreshed_game.diller_cards)
+        )
+        cards_str: str = "\n".join(players_cards) + diller_card_str
+        context.message = cards_str
+        await self.bot_manager.say_players_take_cards(context)
 
     async def _handle_game_playerhit_stage(
         self, game: GameModel, query: CallbackQuery, context: BotContext
