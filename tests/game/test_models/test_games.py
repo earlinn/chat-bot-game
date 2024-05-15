@@ -50,7 +50,7 @@ class TestPlayerModel:
             session.add(game)
             await session.commit()
 
-        assert game.stage == GameStage.WAITING
+        assert game.stage == GameStage.WAITING_FOR_PLAYERS_TO_JOIN
 
     async def test_default_turn_player_id(
         self,

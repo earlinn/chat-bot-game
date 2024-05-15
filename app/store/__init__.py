@@ -16,6 +16,7 @@ class Store:
             GamePlayAccessor,
             PlayerAccessor,
         )
+        from app.store.game.manager import GameManager
         from app.store.tg_api.accessor import TgApiAccessor
 
         self.admins = AdminAccessor(app)
@@ -23,6 +24,7 @@ class Store:
         self.games = GameAccessor(app)
         self.gameplays = GamePlayAccessor(app)
         self.bots_manager = BotManager(app)
+        self.game_manager = GameManager(app)
         self.tg_api = TgApiAccessor(app)
         self.logger = getLogger("store")
 

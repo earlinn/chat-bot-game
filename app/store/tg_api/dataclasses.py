@@ -4,7 +4,7 @@ from typing import Any, Optional
 
 
 @dataclass
-class BotManagerContext:
+class BotContext:
     """Контекст для передачи в методы-обработчики класса BotManager."""
 
     chat_id: int
