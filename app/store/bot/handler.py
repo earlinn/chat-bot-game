@@ -1,7 +1,7 @@
 import typing
 from logging import getLogger
 
-from app.game.const import GameStage
+from app.game.const import GameStage, PlayerStatus
 from app.game.models import GameModel, PlayerModel
 from app.store.bot import const
 from app.store.bot.manager import BotManager
@@ -147,8 +147,10 @@ class BotHandler:
         карты, формирует строку с информацией о картах игроков и диллера
         и отправляет ее в BotManager, чтобы бот показал ее в чате.
         """
-        refreshed_game = await self.app.store.games.change_active_game_stage(
-            chat_id=context.chat_id, stage=GameStage.PLAYERHIT
+        refreshed_game: GameModel = (
+            await self.app.store.games.change_active_game_stage(
+                chat_id=context.chat_id, stage=GameStage.PLAYERHIT
+            )
         )
 
         players_cards: list[str] = [
@@ -189,16 +191,33 @@ class BotHandler:
             # TODO: написать, что кнопка не соответствует стадии игры
             pass
 
+        refreshed_game: (
+            GameModel | None
+        ) = await self.app.store.games.get_active_game_by_chat_id(
+            context.chat_id
+        )
+        no_taking_players: list[bool] = [
+            gameplay.player_status != PlayerStatus.TAKING
+            for gameplay in refreshed_game.gameplays
+        ]
+        if all(no_taking_players):
+            await self._handle_game_dillerhit_stage(game, query, context)
+
+    # TODO: query не используется здесь, но возможно понадобится на след стадии
+    async def _handle_game_dillerhit_stage(
+        self, game: GameModel, query: CallbackQuery, context: BotContext
+    ) -> None:
+        """Обрабатывает игру в состоянии, когда диллер берет карты."""
+        await self.app.store.games.change_active_game_stage(
+            chat_id=context.chat_id, stage=GameStage.DILLERHIT
+        )
+        await self.game_manager.take_cards_by_diller(game)
+        await self.app.store.games.change_active_game_stage(
+            chat_id=context.chat_id, stage=GameStage.SUMMARIZING
+        )
         # TODO:
-        # - проверить, есть ли геймплеи на стадии TAKING
-        # - если есть, просто ждем
-        # - если нет, посмотреть, есть ли геймплеи в статусе STANDING
-        # -- если есть, то меняем стадию игры на DILLERHIT, и диллер берет
-        # карты, пока не достигнет 17 очков
-        # - когда диллер достиг 17 очков, выводим его карты на экран, меняем
-        # статус игры на SUMMARIZING, подводим итоги игры (игрокам, которые
-        # не EXCEEDED, в геймплеях проставляем LOST или WON), меняем статус
-        # игры на FINISHED и выводим через бота сообщение с подведением итогов
-        # (кто победил/проиграл и с какими очками)
-        # -- если нет, то сразу делаем SUMMARIZING
-        # - также меняем балансы игроков для этого чата (кто-то в +, кто-то в -)
+        # - подводим итоги игры: игрокам, которые не EXCEEDED, в геймплеях
+        # проставляем LOST или WON,
+        # - меняем статус игры на FINISHED и выводим через бота сообщение
+        # с подведением итогов (кто победил/проиграл, с какими очками)
+        # - меняем балансы игроков для этого чата (кто-то в +, кто-то в -)

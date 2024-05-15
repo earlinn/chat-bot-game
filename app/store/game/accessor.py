@@ -128,11 +128,26 @@ class GameAccessor(BaseAccessor):
         async with self.app.database.session() as session:
             return await session.scalar(query)
 
+    async def change_game_fields(
+        self, game_id: int, new_values: dict[str, Any]
+    ) -> GameModel:
+        """Меняет значения полей game."""
+        query = (
+            update(GameModel)
+            .where(GameModel.id == game_id)
+            .values(**new_values)
+            .returning(GameModel)
+        )
+        async with self.app.database.session() as session:
+            game: GameModel = await session.scalar(query)
+            await session.commit()
+        return game
+
     async def change_active_game_stage(
         self, chat_id: int, stage: GameStage
     ) -> GameModel:
         """Находит активную игру по chat_id, переводит ее на новую стадию
-        и возвращает эту игру. Если в чате нет активной игры, возвращает None.
+        и возвращает эту игру.
         """
         query = (
             update(GameModel)

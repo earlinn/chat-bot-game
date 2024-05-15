@@ -5,6 +5,7 @@ from logging import getLogger
 from app.game.const import (
     BLACK_JACK,
     CARDS,
+    DILLER_STOP_SCORE,
     GameStage,
     GameStatus,
     PlayerStatus,
@@ -121,7 +122,7 @@ class GameManager:
         )
         gameplay.player_cards.append(random.choice(list(CARDS)))
         updated_cards: list[str] = gameplay.player_cards
-        score = sum(CARDS[card] for card in updated_cards)
+        score: int = sum(CARDS[card] for card in updated_cards)
 
         # TODO: обработать ситуацию с превращением туза в 1 вместо 11
         if score > BLACK_JACK:
@@ -155,3 +156,15 @@ class GameManager:
             gameplay.id, new_gameplay_values
         )
         return gameplay.player_cards
+
+    async def take_cards_by_diller(self, game: GameModel) -> None:
+        """Добавляет карты диллеру, пока число его очков не достигнет 17."""
+        # TODO: обработать ситуацию с превращением туза в 1 вместо 11
+        score: int = sum(CARDS[card] for card in game.diller_cards)
+
+        while score < DILLER_STOP_SCORE:
+            game.diller_cards.append(random.choice(list(CARDS)))
+            score: int = sum(CARDS[card] for card in game.diller_cards)
+
+        new_game_values = {"diller_cards": game.diller_cards}
+        await self.app.store.games.change_game_fields(game.id, new_game_values)
