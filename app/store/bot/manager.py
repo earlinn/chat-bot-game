@@ -35,40 +35,16 @@ class BotManager:
     def game_manager(self) -> GameManager:
         return self.app.store.game_manager
 
-    async def handle_active_game(
-        self,
-        game: GameModel,
-        query: CallbackQuery,
-        bot_context: BotContext,
-    ) -> None:
-        """Обрабатывает callback_query при наличии активной игры в чате."""
-        query_str: str = query.data
-        if query_str == const.JOIN_GAME_CALLBACK or (
-            query_str == const.ADD_PLAYER_CALLBACK
-            and game.stage != GameStage.WAITING_FOR_PLAYERS_TO_JOIN
-        ):
-            await self._wait_next_game(bot_context)
-
-        elif (
-            query_str == const.ADD_PLAYER_CALLBACK
-            and game.stage == GameStage.WAITING_FOR_PLAYERS_TO_JOIN
-        ):
-            player: PlayerModel = await self.game_manager.get_player(
-                query.from_.id, query.from_.username, bot_context.chat_id
-            )
-            await self.game_manager.get_gameplay(game.id, player.id)
-            bot_context.username = player.username
-            await self._player_joined(bot_context)
-
     async def handle_no_game_case(
         self, query: CallbackQuery, bot_context: BotContext
     ) -> None:
         """Обрабатывает callback_query при отсутствии активной игры в чате."""
-        query_str: str = query.data
-        if query_str == const.ADD_PLAYER_CALLBACK:
-            await self._join_non_existent_game_fail(bot_context)
+        query_message: str = query.data
 
-        elif query_str == const.JOIN_GAME_CALLBACK:
+        if query_message == const.ADD_PLAYER_CALLBACK:
+            await self._say_join_non_existent_game_fail(bot_context)
+
+        elif query_message == const.JOIN_GAME_CALLBACK:
             player: PlayerModel = await self.game_manager.get_player(
                 query.from_.id, query.from_.username, bot_context.chat_id
             )
@@ -76,9 +52,40 @@ class BotManager:
                 bot_context.chat_id
             )
             await self.game_manager.get_gameplay(game.id, player.id)
-            await self._join_new_game(bot_context)
+            await self._say_join_new_game(bot_context)
             bot_context.username = player.username
-            await self._player_joined(bot_context)
+            await self._say_player_joined(bot_context)
+
+    async def handle_active_game(
+        self,
+        game: GameModel,
+        query: CallbackQuery,
+        bot_context: BotContext,
+    ) -> None:
+        """Обрабатывает callback_query при наличии активной игры в чате."""
+        query_message: str = query.data
+
+        if game.stage == GameStage.WAITING_FOR_PLAYERS_TO_JOIN:
+            await self._handle_game_waiting_stage(game, query, bot_context)
+        elif (
+            query_message == const.JOIN_GAME_CALLBACK
+            or query_message == const.ADD_PLAYER_CALLBACK
+        ):
+            await self._say_wait_next_game(bot_context)
+
+    async def _handle_game_waiting_stage(
+        self, game: GameModel, query: CallbackQuery, bot_context: BotContext
+    ) -> None:
+        """Обрабатывает игру в состоянии ожидания присоединения игроков."""
+        query_message: str = query.data
+
+        if query_message == const.ADD_PLAYER_CALLBACK:
+            player: PlayerModel = await self.game_manager.get_player(
+                query.from_.id, query.from_.username, bot_context.chat_id
+            )
+            await self.game_manager.get_gameplay(game.id, player.id)
+            bot_context.username = player.username
+            await self._say_player_joined(bot_context)
 
     async def say_hi_and_play(self, context: BotContext):
         """Печатает приветствие, а также кнопки 'Начать игру' и
@@ -119,7 +126,7 @@ class BotManager:
         await self.tg_api.send_message(button_message, any_buttons_present=True)
 
     async def unknown_command(self, context: BotContext):
-        """Печатает сообщение о том, что команда неизвестна."""
+        """Печатает сообщение, что команда неизвестна."""
         await self.tg_api.send_message(
             SendMessage(chat_id=context.chat_id, text=const.UNKNOWN_MESSAGE)
         )
@@ -135,16 +142,16 @@ class BotManager:
         await asyncio.sleep(seconds)
         await coro
 
-    async def _wait_next_game(self, context: BotContext):
+    async def _say_wait_next_game(self, context: BotContext):
         """Предлагает дождаться окончания текущей игры."""
         button_message = SendMessage(
             chat_id=context.chat_id, text=const.WAITING_MESSAGE
         )
         await self.tg_api.send_message(button_message)
 
-    async def _join_new_game(self, context: BotContext):
-        """Печатает сообщение о возможности присоединиться к новой игре
-        в течение определенного времени и кнопку 'Присоединиться к игре',
+    async def _say_join_new_game(self, context: BotContext):
+        """Печатает сообщение, что можно присоединиться к новой игре
+        в течение определенного времени, и кнопку 'Присоединиться к игре',
         затем запускает таймер.
         """
         button_message = SendMessage(
@@ -163,14 +170,14 @@ class BotManager:
 
         # More info: https://docs.astral.sh/ruff/rules/asyncio-dangling-task/
         timer_task = asyncio.create_task(
-            self._start_timer(self._start_betting_stage(context))
+            self._start_timer(self._say_start_betting_stage(context))
         )
         self.logger.info(timer_task)
         self.background_tasks.add(timer_task)
         timer_task.add_done_callback(self.background_tasks.discard)
 
-    async def _player_joined(self, context: BotContext):
-        """Печатает сообщение о том, что игрок присоединился к игре."""
+    async def _say_player_joined(self, context: BotContext):
+        """Печатает сообщение, что игрок присоединился к игре."""
         await self.tg_api.send_message(
             SendMessage(
                 chat_id=context.chat_id,
@@ -180,7 +187,7 @@ class BotManager:
             )
         )
 
-    async def _join_non_existent_game_fail(self, context: BotContext):
+    async def _say_join_non_existent_game_fail(self, context: BotContext):
         """Печатает сообщение о том, что нельзя присоединиться
         к несуществующей игре.
         """
@@ -191,7 +198,7 @@ class BotManager:
             )
         )
 
-    async def _start_betting_stage(self, context: BotContext):
+    async def _say_start_betting_stage(self, context: BotContext):
         """Печатает сообщение о старте игры, её участниках,
         а также выводит кнопки для ставок.
         """
