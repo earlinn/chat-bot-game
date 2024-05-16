@@ -96,9 +96,7 @@ class GameModel(BaseModel):
         nullable=True,
         default=None,
     )
-    diller_cards: Mapped[list[str]] = mapped_column(
-        ARRAY(String)
-    )  # TODO: make it json after MVP?
+    diller_cards: Mapped[list[str]] = mapped_column(ARRAY(String))
 
     gameplays: Mapped[list["GamePlayModel"]] = relationship(
         back_populates="game"
@@ -125,9 +123,7 @@ class GamePlayModel(BaseModel):
     player_status: Mapped[PlayerStatus] = mapped_column(
         default=PlayerStatus.BETTING
     )
-    player_cards: Mapped[list[str] | None] = mapped_column(
-        ARRAY(String)
-    )  # TODO: make it json after MVP?
+    player_cards: Mapped[list[str] | None] = mapped_column(ARRAY(String))
 
     game: Mapped["GameModel"] = relationship(back_populates="gameplays")
     player: Mapped["PlayerModel"] = relationship(back_populates="gameplays")

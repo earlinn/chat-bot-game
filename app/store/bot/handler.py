@@ -8,7 +8,7 @@ from app.game.const import (
     GameStatus,
     PlayerStatus,
 )
-from app.game.models import GameModel, PlayerModel
+from app.game.models import BalanceModel, GameModel, PlayerModel
 from app.store.bot import const
 from app.store.bot.manager import BotManager
 from app.store.game.manager import GameManager
@@ -97,6 +97,29 @@ class BotHandler:
         else:
             context.username = query.from_.username
             await self.bot_manager.say_no_game_user(context)
+
+    async def handle_my_balance_query(
+        self, query: CallbackQuery, context: BotContext
+    ) -> None:
+        """Обрабатывает запрос на просмотр баланса игрока на любой стадии игры
+        и при отсутствии игры тоже.
+        """
+        player: (
+            PlayerModel | None
+        ) = await self.app.store.players.get_player_by_tg_id(query.from_.id)
+        if player:
+            balance: (
+                BalanceModel | None
+            ) = await self.app.store.players.get_balance_by_player_and_chat(
+                player.id, context.chat_id
+            )
+            if balance:
+                context.message = balance.current_value
+                await self.bot_manager.say_my_balance(context)
+            else:
+                await self.bot_manager.say_no_balance(context)
+        else:
+            await self.bot_manager.say_no_balance(context)
 
     async def _handle_game_waiting_stage(
         self, game: GameModel, query: CallbackQuery, context: BotContext

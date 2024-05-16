@@ -2,6 +2,7 @@ from logging import getLogger
 
 from app.game.models import GameModel
 from app.store import Store
+from app.store.bot import const
 from app.store.tg_api.dataclasses import CallbackQuery, Chat, Message, Update
 
 from .dataclasses import BotContext
@@ -33,8 +34,6 @@ class Router:
         else:
             self.logger.error("Another type of update: %s", update)
 
-    # TODO: нужна команда просмотра игроком своего баланса в чате,
-    # можно сделать ее одной из кнопок, возникающей после команды /start
     async def _process_message_update(self, message: Message) -> None:
         """Обрабатывает update типа message."""
         bot_context: BotContext = await self._get_bot_context(message.chat)
@@ -66,7 +65,12 @@ class Router:
             bot_context.chat_id
         )
 
-        if current_game:
+        if callback_query.data == const.MY_BALANCE_CALLBACK:
+            bot_context.username = callback_query.from_.username
+            await self.store.bot_handler.handle_my_balance_query(
+                callback_query, bot_context
+            )
+        elif current_game:
             bot_context.current_game = current_game
             await self.store.bot_handler.handle_active_game(
                 callback_query, bot_context

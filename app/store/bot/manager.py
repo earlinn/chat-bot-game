@@ -42,9 +42,7 @@ class BotManager:
         await coro
 
     async def say_hi_and_play(self, context: BotContext):
-        """Печатает приветствие, а также кнопки 'Начать игру' и
-        'Посмотреть правила игры'.
-        """
+        """Печатает приветствие и кнопки 'Новая игра' и 'Правила игры'."""
         button_message = SendMessage(
             chat_id=context.chat_id,
             text=const.WELCOME_MESSAGE,
@@ -55,6 +53,10 @@ class BotManager:
                         callback_data=const.JOIN_GAME_CALLBACK,
                     ),
                     InlineKeyboardButton(
+                        text=const.MY_BALANCE_BUTTON,
+                        callback_data=const.MY_BALANCE_CALLBACK,
+                    ),
+                    InlineKeyboardButton(
                         text=const.GAME_RULES_BUTTON, url=const.GAME_RULES_URL
                     ),
                 ]
@@ -63,7 +65,7 @@ class BotManager:
         await self.tg_api.send_message(button_message, any_buttons_present=True)
 
     async def say_hi_and_wait(self, context: BotContext):
-        """Печатает приветствие и кнопку 'Посмотреть правила игры',
+        """Печатает приветствие и кнопку 'Правила игры',
         предлагает дождаться окончания текущей игры.
         """
         button_message = SendMessage(
@@ -73,6 +75,10 @@ class BotManager:
                 [
                     InlineKeyboardButton(
                         text=const.GAME_RULES_BUTTON, url=const.GAME_RULES_URL
+                    ),
+                    InlineKeyboardButton(
+                        text=const.MY_BALANCE_BUTTON,
+                        callback_data=const.MY_BALANCE_CALLBACK,
                     ),
                 ]
             ),
@@ -268,9 +274,7 @@ class BotManager:
         )
 
     async def say_game_results(self, context: BotContext):
-        """Печатает итоги игры и кнопки 'Начать игру' и
-        'Посмотреть правила игры'.
-        """
+        """Печатает итоги игры и кнопки 'Новая игра' и 'Правила игры'."""
         button_message = SendMessage(
             chat_id=context.chat_id,
             text=context.message,
@@ -279,6 +283,10 @@ class BotManager:
                     InlineKeyboardButton(
                         text=const.GAME_ONE_MORE_TIME_BUTTON,
                         callback_data=const.JOIN_GAME_CALLBACK,
+                    ),
+                    InlineKeyboardButton(
+                        text=const.MY_BALANCE_BUTTON,
+                        callback_data=const.MY_BALANCE_CALLBACK,
                     ),
                     InlineKeyboardButton(
                         text=const.GAME_RULES_BUTTON,
@@ -320,5 +328,26 @@ class BotManager:
                 text=const.NOT_GAME_USER_MESSAGE.format(
                     player=context.username
                 ),
+            )
+        )
+
+    async def say_my_balance(self, context: BotContext):
+        """Печатает баланс игрока в данном чате."""
+        await self.tg_api.send_message(
+            SendMessage(
+                chat_id=context.chat_id,
+                text=const.MY_BALANCE_MESSAGE.format(
+                    player=context.username,
+                    value=context.message,
+                ),
+            )
+        )
+
+    async def say_no_balance(self, context: BotContext):
+        """Печатает сообщение, что у пользователя нет баланса в данном чате."""
+        await self.tg_api.send_message(
+            SendMessage(
+                chat_id=context.chat_id,
+                text=const.NO_BALANCE_MESSAGE.format(username=context.username),
             )
         )
