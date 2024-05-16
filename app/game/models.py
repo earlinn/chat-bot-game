@@ -85,6 +85,13 @@ class GameModel(BaseModel):
     stage: Mapped[GameStage] = mapped_column(
         default=GameStage.WAITING_FOR_PLAYERS_TO_JOIN
     )
+    # TODO: поле turn_player_id не используется в игровом процессе, стадии
+    # меняются сами автоматически, игроки берут карты не по очереди, а в режиме
+    # реального времени (пока стадия игры позволяет), диллер берет карты после
+    # того, как все игроки закончили их брать.
+    # Наверно надо выпилить это поле из модели и изо всех relationship, схем,
+    # миграций (можно не создавать новую миграцию, а отредактировать старые,
+    # где оно встречается), фикстур и тестов
     turn_player_id: Mapped[int] = mapped_column(
         ForeignKey("players.id", ondelete="CASCADE"),
         nullable=True,

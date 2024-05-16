@@ -33,6 +33,8 @@ class Router:
         else:
             self.logger.error("Another type of update: %s", update)
 
+    # TODO: нужна команда просмотра игроком своего баланса в чате,
+    # можно сделать ее одной из кнопок, возникающей после команды /start
     async def _process_message_update(self, message: Message) -> None:
         """Обрабатывает update типа message."""
         bot_context: BotContext = await self._get_bot_context(message.chat)

@@ -1,7 +1,13 @@
 import typing
 from logging import getLogger
 
-from app.game.const import GameStage, PlayerStatus
+from app.game.const import (
+    BLACK_JACK,
+    CARDS,
+    GameStage,
+    GameStatus,
+    PlayerStatus,
+)
 from app.game.models import GameModel, PlayerModel
 from app.store.bot import const
 from app.store.bot.manager import BotManager
@@ -24,6 +30,9 @@ if typing.TYPE_CHECKING:
 # Если да, то является ли юзер, нажавший кнопку игроком в этой игре.
 # Если да, то вправе ли он ее нажимать (например, он уже перестал брать
 # карты, а теперь опять жмет на Взять карту).
+# TODO: если игроку в самом начале при раздаче карт достались 2 карты,
+# которые в сумме равны 21, то он немедленно выигрывает, если диллеру в самом
+# начале игры не досталась карта-картинка, можно сделать это после MVP
 class BotHandler:
     """Класс для обработки запросов к боту."""
 
@@ -156,6 +165,7 @@ class BotHandler:
         players_cards: list[str] = [
             const.PLAYER_CARDS_STR.format(
                 username=gameplay.player.username,
+                # TODO: сделать метод для объединения списка карт в строку
                 player_cards=", ".join(gameplay.player_cards),
             )
             for gameplay in refreshed_game.gameplays
@@ -170,7 +180,7 @@ class BotHandler:
     async def _handle_game_playerhit_stage(
         self, game: GameModel, query: CallbackQuery, context: BotContext
     ) -> None:
-        """Обрабатывает игру в состоянии, когда игроки берут карты."""
+        """Обрабатывает игру на стадии, когда игроки берут карты."""
         query_message: str = query.data
         context.username = query.from_.username
 
@@ -201,23 +211,106 @@ class BotHandler:
             for gameplay in refreshed_game.gameplays
         ]
         if all(no_taking_players):
-            await self._handle_game_dillerhit_stage(game, query, context)
+            await self._handle_game_dillerhit_stage(context)
 
-    # TODO: query не используется здесь, но возможно понадобится на след стадии
-    async def _handle_game_dillerhit_stage(
-        self, game: GameModel, query: CallbackQuery, context: BotContext
+    async def _handle_game_dillerhit_stage(self, context: BotContext) -> None:
+        """Обрабатывает игру на стадии, когда диллер берет карты."""
+        dillerhit_game: GameModel = (
+            await self.app.store.games.change_active_game_stage(
+                chat_id=context.chat_id, stage=GameStage.DILLERHIT
+            )
+        )
+        diller_score: int = await self.game_manager.take_cards_by_diller(
+            dillerhit_game
+        )
+        summarizing_game: GameModel = (
+            await self.app.store.games.change_active_game_stage(
+                chat_id=context.chat_id, stage=GameStage.SUMMARIZING
+            )
+        )
+        await self._handle_game_summarizing_stage(
+            summarizing_game, context, diller_score
+        )
+
+    # TODO: вынести часть функционала в отдельные методы, можно в GameManager
+    async def _handle_game_summarizing_stage(
+        self,
+        summarizing_game: GameModel,
+        context: BotContext,
+        diller_score: int,
     ) -> None:
-        """Обрабатывает игру в состоянии, когда диллер берет карты."""
-        await self.app.store.games.change_active_game_stage(
-            chat_id=context.chat_id, stage=GameStage.DILLERHIT
+        """Обрабатывает игру на стадии подведения итогов."""
+        game_results: list[str] = []
+
+        for gameplay in summarizing_game.gameplays:
+            player_score: int = sum(
+                CARDS[card] for card in gameplay.player_cards
+            )
+
+            if gameplay.player_status == PlayerStatus.EXCEEDED:
+                await self.game_manager.change_player_balance(
+                    gameplay.player_id, context.chat_id, -gameplay.player_bet
+                )
+                result_str = const.PLAYER_EXCEDDED_RESULTS_MESSAGE.format(
+                    player=gameplay.player.username,
+                    cards=", ".join(gameplay.player_cards),
+                    bet=gameplay.player_bet,
+                    score=player_score,
+                )
+                game_results.append(result_str)
+
+            elif diller_score > BLACK_JACK or player_score > diller_score:
+                await self.app.store.gameplays.change_gameplay_fields(
+                    gameplay_id=gameplay.id,
+                    new_values={"player_status": PlayerStatus.WON},
+                )
+                await self.game_manager.change_player_balance(
+                    gameplay.player_id, context.chat_id, gameplay.player_bet
+                )
+                result_str = const.PLAYER_WON_RESULTS_MESSAGE.format(
+                    player=gameplay.player.username,
+                    cards=", ".join(gameplay.player_cards),
+                    bet=gameplay.player_bet,
+                    score=player_score,
+                )
+                game_results.append(result_str)
+
+            elif player_score < diller_score:
+                await self.app.store.gameplays.change_gameplay_fields(
+                    gameplay_id=gameplay.id,
+                    new_values={"player_status": PlayerStatus.LOST},
+                )
+                await self.game_manager.change_player_balance(
+                    gameplay.player_id, context.chat_id, -gameplay.player_bet
+                )
+                result_str = const.PLAYER_LOST_RESULTS_MESSAGE.format(
+                    player=gameplay.player.username,
+                    cards=", ".join(gameplay.player_cards),
+                    bet=gameplay.player_bet,
+                    score=player_score,
+                )
+                game_results.append(result_str)
+
+            else:
+                await self.app.store.gameplays.change_gameplay_fields(
+                    gameplay_id=gameplay.id,
+                    new_values={"player_status": PlayerStatus.TIE},
+                )
+                result_str = const.PLAYER_TIE_RESULTS_MESSAGE.format(
+                    player=gameplay.player.username,
+                    cards=", ".join(gameplay.player_cards),
+                    score=player_score,
+                )
+                game_results.append(result_str)
+
+        await self.app.store.games.change_game_fields(
+            game_id=summarizing_game.id,
+            new_values={"status": GameStatus.FINISHED},
         )
-        await self.game_manager.take_cards_by_diller(game)
-        await self.app.store.games.change_active_game_stage(
-            chat_id=context.chat_id, stage=GameStage.SUMMARIZING
+        game_results_str = const.GAME_RESULTS_MESSAGE.format(
+            players="".join(game_results),
+            diller_cards=", ".join(summarizing_game.diller_cards),
+            score=diller_score,
         )
-        # TODO:
-        # - подводим итоги игры: игрокам, которые не EXCEEDED, в геймплеях
-        # проставляем LOST или WON,
-        # - меняем статус игры на FINISHED и выводим через бота сообщение
-        # с подведением итогов (кто победил/проиграл, с какими очками)
-        # - меняем балансы игроков для этого чата (кто-то в +, кто-то в -)
+        context.message = game_results_str
+        await self.bot_manager.say_game_results(context)

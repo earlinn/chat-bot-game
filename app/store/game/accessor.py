@@ -74,6 +74,27 @@ class PlayerAccessor(BaseAccessor):
         async with self.app.database.session() as session:
             return await session.scalar(query)
 
+    async def change_balance_current_value(
+        self, player_id: int, chat_id: int, new_value: int
+    ) -> BalanceModel:
+        """Меняет сумму на балансе игрока в определенном чате и возвращает
+        обновленный баланс.
+        """
+        query = (
+            update(BalanceModel)
+            .where(
+                and_(
+                    BalanceModel.chat_id == chat_id,
+                    BalanceModel.player_id == player_id,
+                )
+            )
+            .values(current_value=new_value)
+        ).returning(BalanceModel)
+        async with self.app.database.session() as session:
+            balance = await session.scalar(query)
+            await session.commit()
+        return balance
+
 
 class GameAccessor(BaseAccessor):
     async def create_game(

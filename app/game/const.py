@@ -29,6 +29,7 @@ class PlayerStatus(enum.StrEnum):
     BETTING = "betting"
     TAKING = "taking"
     STANDING = "standing"
-    EXCEEDED = "exceeded"
-    LOST = "lost"
-    WON = "won"
+    EXCEEDED = "exceeded"  # игрок немедленно проигрывает (его ставка - диллеру)
+    LOST = "lost"  # игрок проигрывает (его ставка - диллеру)
+    WON = "won"  # ставка оплачивается 1:1 (т.е. плюсуем к балансу сумму ставки)
+    TIE = "tie"  # в случае ничьей все остаются при своих

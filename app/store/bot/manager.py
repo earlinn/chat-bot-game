@@ -266,3 +266,25 @@ class BotManager:
                 ),
             )
         )
+
+    async def say_game_results(self, context: BotContext):
+        """Печатает итоги игры и кнопки 'Начать игру' и
+        'Посмотреть правила игры'.
+        """
+        button_message = SendMessage(
+            chat_id=context.chat_id,
+            text=context.message,
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    InlineKeyboardButton(
+                        text=const.GAME_ONE_MORE_TIME_BUTTON,
+                        callback_data=const.JOIN_GAME_CALLBACK,
+                    ),
+                    InlineKeyboardButton(
+                        text=const.GAME_RULES_BUTTON,
+                        url=const.GAME_RULES_URL,
+                    ),
+                ]
+            ),
+        )
+        await self.tg_api.send_message(button_message, any_buttons_present=True)

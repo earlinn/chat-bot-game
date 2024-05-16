@@ -1,5 +1,5 @@
 # Timer time
-TIMER_DELAY_IN_SECONDS = 1
+TIMER_DELAY_IN_SECONDS = 1  # TODO: change to 30 seconds
 
 # URLs
 GAME_RULES_URL = "https://ru.wikihow.com/играть-в-блэкджек"
@@ -39,6 +39,25 @@ GAME_PLAYERHIT_STAGE_MESSAGE = (
 PLAYER_EXCEEDED_MESSAGE = "У {player} более 21 очка, на руках: {cards}"
 PLAYER_NOT_EXCEEDED_MESSAGE = "{player} берет еще карту, на руках: {cards}"
 PLAYER_STOP_TAKING_MESSAGE = "{player} больше не берет карты, на руках: {cards}"
+PLAYER_EXCEDDED_RESULTS_MESSAGE = (
+    "У {player} перебор, на руках: {cards} (в сумме {score}).\n"
+    "-{bet} к балансу в этом чате.\n\n"
+)
+PLAYER_WON_RESULTS_MESSAGE = (
+    "{player} выигрывает у диллера, на руках: {cards} (в сумме {score}).\n"
+    "+{bet} к балансу в этом чате.\n\n"
+)
+PLAYER_LOST_RESULTS_MESSAGE = (
+    "{player} проигрывает диллеру, на руках: {cards} (в сумме {score}).\n"
+    "-{bet} к балансу в этом чате.\n\n"
+)
+PLAYER_TIE_RESULTS_MESSAGE = (
+    "У {player} ничья с диллером, на руках: {cards} (в сумме {score}).\n"
+    "Баланс не меняется.\n\n"
+)
+GAME_RESULTS_MESSAGE = (
+    "Итоги игры:\n\n{players}" "Карты диллера: {diller_cards} (в сумме {score})"
+)
 UNKNOWN_MESSAGE = "Неизвестная команда"
 
 # Cards strings
@@ -49,6 +68,7 @@ DILLER_CARDS_STR = "\nДиллер:  {diller_cards}"
 GAME_START_BUTTON = "Начать новую игру"
 GAME_JOIN_BUTTON = "Присоединиться к игре"
 GAME_RULES_BUTTON = "Посмотреть правила игры"
+GAME_ONE_MORE_TIME_BUTTON = "Сыграть еще раз"
 BET_10_BUTTON = "10💰"
 BET_25_BUTTON = "25💰"
 BET_50_BUTTON = "50💰"

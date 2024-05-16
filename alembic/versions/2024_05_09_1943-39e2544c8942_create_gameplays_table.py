@@ -25,7 +25,7 @@ def upgrade() -> None:
     sa.Column('game_id', sa.Integer(), nullable=False),
     sa.Column('player_id', sa.Integer(), nullable=False),
     sa.Column('player_bet', sa.Integer(), nullable=False),
-    sa.Column('player_status', sa.Enum('BETTING', 'TAKING', 'STANDING', 'EXCEEDED', 'LOST', 'WON', name='playerstatus'), nullable=False),
+    sa.Column('player_status', sa.Enum('BETTING', 'TAKING', 'STANDING', 'EXCEEDED', 'LOST', 'WON', 'TIE', name='playerstatus'), nullable=False),
     sa.Column('player_cards', sa.ARRAY(sa.String()), nullable=False),
     sa.CheckConstraint('player_bet > 0', name='positive_player_bet_constraint'),
     sa.ForeignKeyConstraint(['game_id'], ['games.id'], ondelete='CASCADE'),

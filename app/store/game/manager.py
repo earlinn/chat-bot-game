@@ -157,8 +157,10 @@ class GameManager:
         )
         return gameplay.player_cards
 
-    async def take_cards_by_diller(self, game: GameModel) -> None:
-        """Добавляет карты диллеру, пока число его очков не достигнет 17."""
+    async def take_cards_by_diller(self, game: GameModel) -> int:
+        """Добавляет карты диллеру, пока число его очков не достигнет 17,
+        возвращает итоговое число очков диллера.
+        """
         # TODO: обработать ситуацию с превращением туза в 1 вместо 11
         score: int = sum(CARDS[card] for card in game.diller_cards)
 
@@ -168,3 +170,20 @@ class GameManager:
 
         new_game_values = {"diller_cards": game.diller_cards}
         await self.app.store.games.change_game_fields(game.id, new_game_values)
+        return score
+
+    async def change_player_balance(
+        self, player_id: int, chat_id: int, value_change: int
+    ):
+        """Запрашивает баланс игрока в чате, определяет новую сумму, которая
+        должна быть на балансе, и обновляет сумму на балансе.
+        """
+        balance: BalanceModel = (
+            await self.app.store.players.get_balance_by_player_and_chat(
+                player_id=player_id, chat_id=chat_id
+            )
+        )
+        new_value: int = balance.current_value + value_change
+        await self.app.store.players.change_balance_current_value(
+            player_id, chat_id, new_value
+        )
