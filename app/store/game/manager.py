@@ -187,3 +187,44 @@ class GameManager:
         await self.app.store.players.change_balance_current_value(
             player_id, chat_id, new_value
         )
+
+    async def finalize_player_result(
+        self,
+        chat_id: int,
+        gameplay: GamePlayModel,
+        player_score: int,
+        message: str,
+        player_balance_change: int | None = None,
+        gameplay_status_change: str | None = None,
+    ) -> str:
+        """Присваивает игроку в геймплее финальный статус
+        (если у игрока не было перебора очков),
+        обновляет его баланс (player_balance_change == True, если игрок
+        не сыграл с диллером вничью) и возвращает строку с результатами игрока.
+        """
+        if gameplay_status_change:
+            await self.app.store.gameplays.change_gameplay_fields(
+                gameplay_id=gameplay.id,
+                new_values={"player_status": gameplay_status_change},
+            )
+        if player_balance_change:
+            await self.change_player_balance(
+                gameplay.player_id, chat_id, player_balance_change
+            )
+            result_str = message.format(
+                player=gameplay.player.username,
+                cards=self.app.store.bot_handler._get_cards_string(
+                    gameplay.player_cards
+                ),
+                bet=gameplay.player_bet,
+                score=player_score,
+            )
+        else:
+            result_str = message.format(
+                player=gameplay.player.username,
+                cards=self.app.store.bot_handler._get_cards_string(
+                    gameplay.player_cards
+                ),
+                score=player_score,
+            )
+        return result_str
