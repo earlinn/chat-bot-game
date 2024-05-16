@@ -288,3 +288,12 @@ class BotManager:
             ),
         )
         await self.tg_api.send_message(button_message, any_buttons_present=True)
+
+    async def say_button_no_match_game_stage(self, context: BotContext):
+        """Печатает сообщение, что кнопка не соответствует стадии игры."""
+        await self.tg_api.send_message(
+            SendMessage(
+                chat_id=context.chat_id,
+                text=const.BUTTON_NO_MATCH_STAGE_MESSAGE,
+            )
+        )

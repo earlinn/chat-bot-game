@@ -18,18 +18,11 @@ if typing.TYPE_CHECKING:
     from app.web.app import Application
 
 
-# TODO: А если на эти кнопки кто-то нажмет, когда никакой игры вообще нет?
-# Или она есть, но не на стадии ставок? Или юзер не является игроком?
-# Это любых кнопок касается.
-# Наверно надо эти ситуации обрабатывать в хендлерах стадий игры
-# ( _handle_game_waiting_stage,_handle_game_betting_stage и т.п.).
-# Там можно по query_message понять, относится ли эта кнопка к этой стадии
-# (внутри каждого хендлера стадии есть условный оператор, и если кнопка
-# не относится к этой стадии, то она попадет под else, который выведет
-# сообщение, что кнопка не относится к текущей стадии игры).
-# Если да, то является ли юзер, нажавший кнопку игроком в этой игре.
+# TODO: Что если юзер, нажавший кнопку в игре, не является игроком?
 # Если да, то вправе ли он ее нажимать (например, он уже перестал брать
 # карты, а теперь опять жмет на Взять карту).
+
+
 # TODO: если игроку в самом начале при раздаче карт достались 2 карты,
 # которые в сумме равны 21, то он немедленно выигрывает, если диллеру в самом
 # начале игры не досталась карта-картинка, можно сделать это после MVP
@@ -108,8 +101,7 @@ class BotHandler:
             context.username = player.username
             await self.bot_manager.say_player_joined(context)
         else:
-            # TODO: написать, что кнопка не соответствует стадии игры
-            pass
+            await self.bot_manager.say_button_no_match_game_stage(context)
 
     # TODO: Если не все сделали ставки, то ничего не делаем или, как вариант,
     # запускаем таймер и пишем, что у них 30 секунд на ставки, если они все
@@ -121,6 +113,9 @@ class BotHandler:
         """Обрабатывает игру в состоянии, когда игроки делают ставки."""
         query_message: str = query.data
         context.username = query.from_.username
+        # wrong_button нужен там, где после цикла query_message есть еще что-то,
+        # что не должно происходить, если нажата неверная кнопка для этой стадии
+        wrong_button = False
 
         if query_message == const.BET_10_CALLBACK:
             bet_value = 10
@@ -131,18 +126,15 @@ class BotHandler:
         elif query_message == const.BET_100_CALLBACK:
             bet_value = 100
         else:
-            # TODO: написать, что кнопка не соответствует стадии игры
-            pass
+            await self.bot_manager.say_button_no_match_game_stage(context)
+            wrong_button = True
 
-        try:
+        if not wrong_button:
             all_players_have_bet: bool = await self._handle_bet(
                 game, query, context, bet_value
             )
-        except UnboundLocalError as e:
-            self.logger.error("Exception", exc_info=e)
-            self.app.store.tg_api.disconnect()
-        if all_players_have_bet:
-            await self._handle_playerhit_initial(context)
+            if all_players_have_bet:
+                await self._handle_playerhit_initial(context)
 
     async def _handle_bet(
         self,
@@ -191,6 +183,7 @@ class BotHandler:
         """Обрабатывает игру на стадии, когда игроки берут карты."""
         query_message: str = query.data
         context.username = query.from_.username
+        wrong_button = False
 
         if query_message == const.TAKE_CARD_CALLBACK:
             exceeded, cards = await self.game_manager.take_a_card(game, query)
@@ -206,20 +199,22 @@ class BotHandler:
             await self.bot_manager.say_player_stopped_taking(context)
 
         else:
-            # TODO: написать, что кнопка не соответствует стадии игры
-            pass
+            wrong_button = True
+            await self.bot_manager.say_button_no_match_game_stage(context)
 
-        refreshed_game: (
-            GameModel | None
-        ) = await self.app.store.games.get_active_game_by_chat_id(
-            context.chat_id
-        )
-        no_taking_players: list[bool] = [
-            gameplay.player_status != PlayerStatus.TAKING
-            for gameplay in refreshed_game.gameplays
-        ]
-        if all(no_taking_players):
-            await self._handle_game_dillerhit_stage(context)
+        if not wrong_button:
+            refreshed_game: (
+                GameModel | None
+            ) = await self.app.store.games.get_active_game_by_chat_id(
+                context.chat_id
+            )
+            no_taking_players: list[bool] = [
+                gameplay.player_status != PlayerStatus.TAKING
+                for gameplay in refreshed_game.gameplays
+            ]
+
+            if all(no_taking_players):
+                await self._handle_game_dillerhit_stage(context)
 
     async def _handle_game_dillerhit_stage(self, context: BotContext) -> None:
         """Обрабатывает игру на стадии, когда диллер берет карты."""
