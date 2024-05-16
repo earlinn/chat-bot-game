@@ -65,6 +65,7 @@ BUTTON_NO_MATCH_STAGE_MESSAGE = (
 WRONG_STATUS_TO_TAKE_CARD_MESSAGE = (
     "@{player}, вы больше не можете брать карты."
 )
+NOT_GAME_USER_MESSAGE = "@{player}, вы не являетесь игроком в текущей игре."
 
 # Cards strings
 PLAYER_CARDS_STR = "{username}:  {player_cards}"

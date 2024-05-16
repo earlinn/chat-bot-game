@@ -18,11 +18,6 @@ if typing.TYPE_CHECKING:
     from app.web.app import Application
 
 
-# TODO: Что если юзер, нажавший кнопку в игре, не является игроком?
-# Если да, то вправе ли он ее нажимать (например, он уже перестал брать
-# карты, а теперь опять жмет на Взять карту).
-
-
 # TODO: если игроку в самом начале при раздаче карт достались 2 карты,
 # которые в сумме равны 21, то он немедленно выигрывает, если диллеру в самом
 # начале игры не досталась карта-картинка, можно сделать это после MVP
@@ -71,21 +66,37 @@ class BotHandler:
         query: CallbackQuery,
         context: BotContext,
     ) -> None:
-        """Обрабатывает callback_query при наличии активной игры в чате."""
+        """Обрабатывает callback_query при наличии активной игры в чате:
+        проверяет стадию игры и является ли пользователь, нажавший кнопку,
+        игроком в данной игре. В зависимости от этого отправляет запрос в
+        обработчик нужной стадии игры либо печатает сообщение об ошибке.
+        """
         query_message: str = query.data
         game = context.current_game
+        from_user: (
+            PlayerModel | None
+        ) = await self.app.store.players.get_player_by_tg_id(query.from_.id)
+        if from_user is None:
+            is_player_user = False
+        else:
+            is_player_user: bool = from_user.id in [
+                gameplay.player_id for gameplay in game.gameplays
+            ]
 
         if game.stage == GameStage.WAITING_FOR_PLAYERS_TO_JOIN:
             await self._handle_game_waiting_stage(game, query, context)
-        elif game.stage == GameStage.BETTING:
+        elif game.stage == GameStage.BETTING and is_player_user:
             await self._handle_game_betting_stage(game, query, context)
-        elif game.stage == GameStage.PLAYERHIT:
+        elif game.stage == GameStage.PLAYERHIT and is_player_user:
             await self._handle_game_playerhit_stage(game, query, context)
         elif (
             query_message == const.JOIN_GAME_CALLBACK
             or query_message == const.ADD_PLAYER_CALLBACK
         ):
             await self.bot_manager.say_wait_next_game(context)
+        else:
+            context.username = query.from_.username
+            await self.bot_manager.say_no_game_user(context)
 
     async def _handle_game_waiting_stage(
         self, game: GameModel, query: CallbackQuery, context: BotContext

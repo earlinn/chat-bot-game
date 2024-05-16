@@ -308,3 +308,17 @@ class BotManager:
                 ),
             )
         )
+
+    async def say_no_game_user(self, context: BotContext):
+        """Печатает сообщение, что данный пользователь не является игроком
+        в текущей игре, в случаях, если пользователи-неигроки нажимают на
+        игровые кнопки не на стадии присоединения игроков.
+        """
+        await self.tg_api.send_message(
+            SendMessage(
+                chat_id=context.chat_id,
+                text=const.NOT_GAME_USER_MESSAGE.format(
+                    player=context.username
+                ),
+            )
+        )
