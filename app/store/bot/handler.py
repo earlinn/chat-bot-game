@@ -186,9 +186,16 @@ class BotHandler:
         wrong_button = False
 
         if query_message == const.TAKE_CARD_CALLBACK:
-            exceeded, cards = await self.game_manager.take_a_card(game, query)
+            (
+                exceeded,
+                cards,
+                wrong_player_status,
+            ) = await self.game_manager.take_a_card(game, query)
             context.message = self._get_cards_string(cards)
-            if exceeded:
+
+            if wrong_player_status:
+                await self.bot_manager.say_wrong_status_to_take_cards(context)
+            elif exceeded:
                 await self.bot_manager.say_player_exceeded(context)
             else:
                 await self.bot_manager.say_player_not_exceeded(context)

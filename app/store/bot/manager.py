@@ -297,3 +297,14 @@ class BotManager:
                 text=const.BUTTON_NO_MATCH_STAGE_MESSAGE,
             )
         )
+
+    async def say_wrong_status_to_take_cards(self, context: BotContext):
+        """Печатает сообщение, что данный игрок уже не может брать карты."""
+        await self.tg_api.send_message(
+            SendMessage(
+                chat_id=context.chat_id,
+                text=const.WRONG_STATUS_TO_TAKE_CARD_MESSAGE.format(
+                    player=context.username
+                ),
+            )
+        )

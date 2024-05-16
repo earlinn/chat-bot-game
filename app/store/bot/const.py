@@ -1,5 +1,5 @@
 # Timer time
-TIMER_DELAY_IN_SECONDS = 100  # TODO: change to 30 seconds
+TIMER_DELAY_IN_SECONDS = 1  # TODO: change to 30 seconds
 
 # URLs
 GAME_RULES_URL = "https://ru.wikihow.com/играть-в-блэкджек"
@@ -61,6 +61,9 @@ GAME_RESULTS_MESSAGE = (
 UNKNOWN_MESSAGE = "Неизвестная команда"
 BUTTON_NO_MATCH_STAGE_MESSAGE = (
     "Данная кнопка не соответствует текущей стадии игры."
+)
+WRONG_STATUS_TO_TAKE_CARD_MESSAGE = (
+    "@{player}, вы больше не можете брать карты."
 )
 
 # Cards strings

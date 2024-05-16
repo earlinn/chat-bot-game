@@ -21,7 +21,6 @@ from .const import GameStage, GameStatus, PlayerStatus
 TG_USERNAME_REGEX: str = r"^[a-zA-Z0-9_]{5,32}$"
 DEFAULT_NEW_BALANCE = 1000
 intpk = Annotated[int, mapped_column(primary_key=True)]
-int_unique = Annotated[int, mapped_column(unique=True)]
 int_default_1000 = Annotated[int, mapped_column(default=DEFAULT_NEW_BALANCE)]
 created_at = Annotated[
     datetime, mapped_column(server_default=text("TIMEZONE('utc', now())"))
@@ -33,7 +32,7 @@ class PlayerModel(BaseModel):
 
     id: Mapped[intpk]
     username: Mapped[str] = mapped_column(String(32), unique=True)
-    tg_id: Mapped[int_unique]
+    tg_id: Mapped[int] = mapped_column(BigInteger(), unique=True)
 
     balances: Mapped[list["BalanceModel"]] = relationship(
         back_populates="player"

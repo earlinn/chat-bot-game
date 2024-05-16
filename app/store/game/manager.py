@@ -109,17 +109,24 @@ class GameManager:
 
     async def take_a_card(
         self, game: GameModel, query: CallbackQuery
-    ) -> tuple[bool, list[str]]:
+    ) -> tuple[bool, list[str], bool]:
         """Добавляет игроку в геймплей еще одну карту, проверяет превышение
-        21 очка и возвращает результат проверки вместе со списком карт.
+        21 очка и возвращает результат проверки, список карт, а также результат
+        проверки правильности статуса игрока (находится ли он в статусе игрока,
+        который берет карты).
         """
-        exceeded = False
+        exceeded, wrong_player_status = False, False
         player: PlayerModel = await self.app.store.players.get_player_by_tg_id(
             query.from_.id
         )
         gameplay: GamePlayModel = next(
             filter(lambda x: x.player.id == player.id, game.gameplays)
         )
+
+        if gameplay.player_status != PlayerStatus.TAKING:
+            wrong_player_status = True
+            return exceeded, gameplay.player_cards, wrong_player_status
+
         gameplay.player_cards.append(random.choice(list(CARDS)))
         updated_cards: list[str] = gameplay.player_cards
         score: int = sum(CARDS[card] for card in updated_cards)
@@ -137,7 +144,7 @@ class GameManager:
         await self.app.store.gameplays.change_gameplay_fields(
             gameplay.id, new_gameplay_values
         )
-        return exceeded, updated_cards
+        return exceeded, updated_cards, wrong_player_status
 
     async def stop_take_cards(
         self, game: GameModel, query: CallbackQuery
