@@ -17,11 +17,13 @@ if typing.TYPE_CHECKING:
     from app.web.app import Application
 
 
-class GameManager:
+class PlayerManager:
+    """Класс с бизнес-логикой для игроков и их балансов."""
+
     def __init__(self, app: "Application"):
         """Подключается к app и к логгеру."""
         self.app = app
-        self.logger = getLogger("game manager")
+        self.logger = getLogger("player manager")
 
     async def get_player(
         self, user_id: int, username: str, chat_id: int
@@ -50,6 +52,31 @@ class GameManager:
             )
             self.logger.info("Balance created: %s", balance)
         return player
+
+    async def change_player_balance(
+        self, player_id: int, chat_id: int, value_change: int
+    ):
+        """Запрашивает баланс игрока в чате, определяет новую сумму, которая
+        должна быть на балансе, и обновляет сумму на балансе.
+        """
+        balance: BalanceModel = (
+            await self.app.store.players.get_balance_by_player_and_chat(
+                player_id=player_id, chat_id=chat_id
+            )
+        )
+        new_value: int = balance.current_value + value_change
+        await self.app.store.players.change_balance_current_value(
+            player_id, chat_id, new_value
+        )
+
+
+class GameManager:
+    """Класс с бизнес-логикой для игры и геймплея."""
+
+    def __init__(self, app: "Application"):
+        """Подключается к app и к логгеру."""
+        self.app = app
+        self.logger = getLogger("game manager")
 
     async def get_game(self, chat_id: int) -> GameModel:
         """Получает или создает новую игру."""
@@ -179,22 +206,6 @@ class GameManager:
         await self.app.store.games.change_game_fields(game.id, new_game_values)
         return score
 
-    async def change_player_balance(
-        self, player_id: int, chat_id: int, value_change: int
-    ):
-        """Запрашивает баланс игрока в чате, определяет новую сумму, которая
-        должна быть на балансе, и обновляет сумму на балансе.
-        """
-        balance: BalanceModel = (
-            await self.app.store.players.get_balance_by_player_and_chat(
-                player_id=player_id, chat_id=chat_id
-            )
-        )
-        new_value: int = balance.current_value + value_change
-        await self.app.store.players.change_balance_current_value(
-            player_id, chat_id, new_value
-        )
-
     async def finalize_player_result(
         self,
         chat_id: int,
@@ -204,10 +215,9 @@ class GameManager:
         player_balance_change: int | None = None,
         gameplay_status_change: str | None = None,
     ) -> str:
-        """Присваивает игроку в геймплее финальный статус
-        (если у игрока не было перебора очков),
-        обновляет его баланс (player_balance_change == True, если игрок
-        не сыграл с диллером вничью) и возвращает строку с результатами игрока.
+        """Присваивает игроку в геймплее финальный статус (если у игрока не было
+        перебора очков), обновляет его баланс (если игрок не сыграл с диллером
+        вничью) и возвращает строку с результатами игрока.
         """
         if gameplay_status_change:
             await self.app.store.gameplays.change_gameplay_fields(
@@ -215,7 +225,7 @@ class GameManager:
                 new_values={"player_status": gameplay_status_change},
             )
         if player_balance_change:
-            await self.change_player_balance(
+            await PlayerManager.change_player_balance(
                 gameplay.player_id, chat_id, player_balance_change
             )
             result_str = message.format(

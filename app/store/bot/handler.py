@@ -11,7 +11,7 @@ from app.game.const import (
 from app.game.models import BalanceModel, GameModel, PlayerModel
 from app.store.bot import const
 from app.store.bot.manager import BotManager
-from app.store.game.manager import GameManager
+from app.store.game.manager import GameManager, PlayerManager
 from app.store.tg_api.dataclasses import BotContext, CallbackQuery
 
 if typing.TYPE_CHECKING:
@@ -37,6 +37,10 @@ class BotHandler:
     def game_manager(self) -> GameManager:
         return self.app.store.game_manager
 
+    @property
+    def player_manager(self) -> PlayerManager:
+        return self.app.store.player_manager
+
     @staticmethod
     def _get_cards_string(card_list: list[str]) -> str:
         """Делает из списка карт строку."""
@@ -52,7 +56,7 @@ class BotHandler:
             await self.bot_manager.say_join_non_existent_game_fail(context)
 
         elif query_message == const.JOIN_GAME_CALLBACK:
-            player: PlayerModel = await self.game_manager.get_player(
+            player: PlayerModel = await self.player_manager.get_player(
                 query.from_.id, query.from_.username, context.chat_id
             )
             game: GameModel = await self.game_manager.get_game(context.chat_id)
@@ -128,7 +132,7 @@ class BotHandler:
         query_message: str = query.data
 
         if query_message == const.ADD_PLAYER_CALLBACK:
-            player: PlayerModel = await self.game_manager.get_player(
+            player: PlayerModel = await self.player_manager.get_player(
                 query.from_.id, query.from_.username, context.chat_id
             )
             await self.game_manager.get_gameplay(game.id, player.id)
