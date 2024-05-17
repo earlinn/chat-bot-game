@@ -13,7 +13,7 @@ database:
   port: 5432
   user: postgres
   password: postgres
-  database: black_jack_bot_test
+  database: postgres  # поменять на black_jack_bot_test для локальных тестов
 bot:
   token: token
   group_id: 1
