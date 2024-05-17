@@ -13,7 +13,7 @@ from tests.const import *
 # TODO: Тестируем
 # - каскадное удаление игры при удалении turn_player_id (тест не проходит)
 # - relationship gameplays (когда будет фикстура геймплея)
-class TestPlayerModel:
+class TestGameModel:
     async def test_default_created_at(
         self,
         db_sessionmaker: async_sessionmaker[AsyncSession],
