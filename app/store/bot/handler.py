@@ -68,7 +68,6 @@ class BotHandler:
             game: GameModel = await self.game_manager.get_game(context.chat_id)
             await self.game_manager.get_gameplay(game.id, player.id)
             await self.bot_manager.say_join_new_game(context)
-            context.username = player.username
             await self.bot_manager.say_player_joined(context)
 
     async def handle_active_game(
@@ -108,7 +107,6 @@ class BotHandler:
         ):
             await self.bot_manager.say_wait_next_game(context)
         else:
-            context.username = query.from_.username
             await self.bot_manager.say_no_game_user(context)
 
     async def handle_my_balance_query(
@@ -148,7 +146,6 @@ class BotHandler:
                 query.from_.id, query.from_.username, context.chat_id
             )
             await self.game_manager.get_gameplay(game.id, player.id)
-            context.username = player.username
             await self.bot_manager.say_player_joined(context)
         else:
             await self.bot_manager.say_button_no_match_game_stage(context)
@@ -174,7 +171,6 @@ class BotHandler:
         вызываются кнопками "10💰", "25💰", "50💰" и "100💰".
         """
         query_message: str = query.data
-        context.username = query.from_.username
         wrong_button = False
 
         if query_message == const.BET_10_CALLBACK:
@@ -251,7 +247,6 @@ class BotHandler:
         STOP_TAKING_CALLBACK вызывается кнопкой "Достаточно карт".
         """
         query_message: str = query.data
-        context.username = query.from_.username
         wrong_button = False
 
         if query_message == const.TAKE_CARD_CALLBACK:

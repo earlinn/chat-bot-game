@@ -36,8 +36,9 @@ class Router:
 
     async def _process_message_update(self, message: Message) -> None:
         """Обрабатывает update типа message."""
-        # TODO: надо сразу добавлять в BotContext поле username
-        bot_context: BotContext = await self._get_bot_context(message.chat)
+        bot_context: BotContext = await self._get_bot_context(
+            chat=message.chat, username=message.from_.username
+        )
         current_game: (
             GameModel | None
         ) = await self.store.games.get_active_game_by_chat_id(
@@ -57,9 +58,9 @@ class Router:
         """Обрабатывает update типа callback_query: получает контекст для бота,
         информацию об игре и отправляет запрос в BotManager.
         """
-        # TODO: надо сразу добавлять в BotContext поле username
         bot_context: BotContext = await self._get_bot_context(
-            callback_query.message.chat
+            chat=callback_query.message.chat,
+            username=callback_query.from_.username,
         )
         current_game: (
             GameModel | None
@@ -68,7 +69,6 @@ class Router:
         )
 
         if callback_query.data == const.MY_BALANCE_CALLBACK:
-            bot_context.username = callback_query.from_.username
             await self.store.bot_handler.handle_my_balance_query(
                 callback_query, bot_context
             )
