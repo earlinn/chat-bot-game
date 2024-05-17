@@ -24,7 +24,7 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('chat_id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text("TIMEZONE('utc', now())"), nullable=False),
-    sa.Column('status', sa.Enum('ACTIVE', 'FINISHED', 'INTERRUPTED', name='gamestatus'), nullable=False),
+    sa.Column('status', sa.Enum('ACTIVE', 'FINISHED', 'INTERRUPTED', 'CANCELED', name='gamestatus'), nullable=False),
     sa.Column('stage', sa.Enum('WAITING_FOR_PLAYERS_TO_JOIN', 'BETTING', 'PLAYERHIT', 'DILLERHIT', 'SUMMARIZING', name='gamestage'), nullable=False),
     sa.Column('turn_player_id', sa.Integer(), nullable=True),
     sa.Column('diller_cards', sa.ARRAY(sa.String()), nullable=False),

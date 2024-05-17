@@ -214,6 +214,30 @@ class GameAccessor(BaseAccessor):
         ]
         return all(players_have_bet)
 
+    async def cancel_active_game_due_to_timer(
+        self, chat_id: int
+    ) -> GameModel | None:
+        """Находит активную игру на стадии ставок по chat_id и меняет
+        ее статус на canceled. Возвращает отмененную игру или None
+        (если активной игры на стадии ставок в данном чате нет).
+        """
+        query = (
+            update(GameModel)
+            .where(
+                and_(
+                    GameModel.chat_id == chat_id,
+                    GameModel.status == GameStatus.ACTIVE,
+                    GameModel.stage == GameStage.BETTING,
+                )
+            )
+            .values(status=GameStatus.CANCELED)
+            .returning(GameModel)
+        )
+        async with self.app.database.session() as session:
+            game = await session.scalar(query)
+            await session.commit()
+        return game
+
 
 class GamePlayAccessor(BaseAccessor):
     # TODO: больше не используется из-за появления get_or_create в BaseAccessor

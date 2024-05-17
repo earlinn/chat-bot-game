@@ -30,11 +30,7 @@ class BotManager:
     def tg_api(self) -> TgApiAccessor:
         return self.app.store.tg_api
 
-    async def _start_timer(
-        self,
-        coro: typing.Coroutine,
-        seconds: int = const.TIMER_DELAY_IN_SECONDS,
-    ):
+    async def _start_timer(self, coro: typing.Coroutine, seconds: int):
         """Запускает таймер на время, указанное в аргументе seconds,
         по прошествии этого времени вызывает корутину coro.
         """
@@ -121,7 +117,10 @@ class BotManager:
 
         # More info: https://docs.astral.sh/ruff/rules/asyncio-dangling-task/
         timer_task = asyncio.create_task(
-            self._start_timer(self.say_start_betting_stage(context))
+            self._start_timer(
+                self.say_start_betting_stage(context),
+                const.WAITING_STAGE_TIMER_IN_SECONDS,
+            )
         )
         self.logger.info(timer_task)
         self.background_tasks.add(timer_task)
@@ -148,8 +147,9 @@ class BotManager:
         )
 
     async def say_start_betting_stage(self, context: BotContext):
-        """Печатает сообщение о старте игры, её участниках,
-        а также выводит кнопки для ставок.
+        """Печатает сообщение о старте игры, её участниках и кнопки для ставок.
+        Затем запускает таймер, чтобы игроки сделали ставки в течение
+        определенного времени, либо игра отменится.
         """
         current_game: GameModel = (
             await self.app.store.games.change_active_game_stage(
@@ -164,7 +164,9 @@ class BotManager:
         )
         button_message = SendMessage(
             chat_id=context.chat_id,
-            text=const.END_TIMER_MESSAGE.format(players=players_str),
+            text=const.END_WAITING_STAGE_TIMER_MESSAGE.format(
+                players=players_str
+            ),
             reply_markup=InlineKeyboardMarkup(
                 [
                     InlineKeyboardButton(
@@ -187,6 +189,15 @@ class BotManager:
             ),
         )
         await self.tg_api.send_message(button_message, any_buttons_present=True)
+        timer_task = asyncio.create_task(
+            self._start_timer(
+                self.say_game_was_cancelled_due_to_timer(context),
+                const.BETTING_STAGE_TIMER_IN_SECONDS,
+            )
+        )
+        self.logger.info(timer_task)
+        self.background_tasks.add(timer_task)
+        timer_task.add_done_callback(self.background_tasks.discard)
 
     async def say_player_have_bet(self, context: BotContext):
         """Печатает сообщение, что игрок такой-то сделал ставку такую-то."""
@@ -356,3 +367,40 @@ class BotManager:
                 text=const.NO_BALANCE_MESSAGE.format(username=context.username),
             )
         )
+
+    async def say_game_was_cancelled_due_to_timer(self, context: BotContext):
+        """Инициирует отмену игры.
+        Если игра была отменена, печатает сообщение об этом и кнопки
+        'Новая игра', 'Мой баланс' и 'Правила игры'.
+        Возможен случай, что игра не отменяется, поскольку она уже не
+        на стадии ставок, т.е. игроки успели сделать ставки вовремя.
+        """
+        canceled_game: (
+            GameModel | None
+        ) = await self.app.store.games.cancel_active_game_due_to_timer(
+            context.chat_id
+        )
+        if canceled_game:
+            button_message = SendMessage(
+                chat_id=context.chat_id,
+                text=const.GAME_CANCELED_MESSAGE,
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        InlineKeyboardButton(
+                            text=const.GAME_START_BUTTON,
+                            callback_data=const.JOIN_GAME_CALLBACK,
+                        ),
+                        InlineKeyboardButton(
+                            text=const.MY_BALANCE_BUTTON,
+                            callback_data=const.MY_BALANCE_CALLBACK,
+                        ),
+                        InlineKeyboardButton(
+                            text=const.GAME_RULES_BUTTON,
+                            url=const.GAME_RULES_URL,
+                        ),
+                    ]
+                ),
+            )
+            await self.tg_api.send_message(
+                button_message, any_buttons_present=True
+            )

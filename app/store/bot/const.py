@@ -1,5 +1,6 @@
 # Timer time
-TIMER_DELAY_IN_SECONDS = 1  # TODO: change to 30 seconds
+WAITING_STAGE_TIMER_IN_SECONDS = 1  # TODO: change to 30 seconds
+BETTING_STAGE_TIMER_IN_SECONDS = 3  # TODO: change to 30 seconds
 
 # URLs
 GAME_RULES_URL = "https://ru.wikihow.com/играть-в-блэкджек"
@@ -17,7 +18,7 @@ WAITING_MESSAGE = (
 )
 START_TIMER_MESSAGE = (
     "Начинаем новую игру. Чтобы присоединиться к игре, нажмите на кнопку ниже "
-    f"в течение {TIMER_DELAY_IN_SECONDS} сек."
+    f"в течение {WAITING_STAGE_TIMER_IN_SECONDS} сек."
 )
 JOINED_GAME_MESSAGE = "{player} в игре"
 JOIN_NON_EXISTENT_GAME_ERROR = (
@@ -25,18 +26,13 @@ JOIN_NON_EXISTENT_GAME_ERROR = (
     "вызовите игрового бота командой 'start', затем нажмите на кнопку "
     "'Новая игра'."
 )
-END_TIMER_MESSAGE = (
+END_WAITING_STAGE_TIMER_MESSAGE = (
     "Игра началась.\nИгроки: {players}\n"
     "Каждый игрок должен сделать ставку, нажав на одну из кнопок ниже. "
-    "Ставка делается один раз за игру и не может быть изменена."
+    "Ставка делается один раз за игру и не может быть изменена.\n\n"
+    f"Если в течение {BETTING_STAGE_TIMER_IN_SECONDS} сек. все игроки "
+    "не сделают ставки, игра будет отменена."
 )
-# END_TIMER_MESSAGE = (
-#     "Игра началась.\nИгроки: {players}\n"
-#     "Каждый игрок должен сделать ставку, нажав на одну из кнопок ниже. "
-#     "Ставка делается один раз за игру и не может быть изменена.\n\n"
-#     "Если в течение {TIMER_DELAY_IN_SECONDS} секунд никто не сделал ставку, "
-#     "игра будет досрочно завершена."
-# )
 PLAYER_HAVE_BET_MESSAGE = "{player} ставит {bet} очков."
 GAME_PLAYERHIT_STAGE_MESSAGE = (
     "Ставки сделаны. "
@@ -79,6 +75,9 @@ NO_BALANCE_MESSAGE = (
     "начните новую игру или присоединитесь к новой игре, созданной другим "
     "пользователем, пока идет стадия присоединения игроков (время этой стадии "
     "ограничено)."
+)
+GAME_CANCELED_MESSAGE = (
+    "Игра отменена, т.к. не все игроки успели вовремя сделать ставки."
 )
 
 # Cards strings
