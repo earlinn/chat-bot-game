@@ -9,6 +9,7 @@ CARDS: dict[str, int] = {
 
 BLACK_JACK = 21
 DILLER_STOP_SCORE = 17
+MINIMAL_BET = 10
 
 
 class GameStatus(enum.StrEnum):

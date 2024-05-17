@@ -17,7 +17,7 @@ WAITING_MESSAGE = (
 )
 START_TIMER_MESSAGE = (
     "Начинаем новую игру. Чтобы присоединиться к игре, нажмите на кнопку ниже "
-    f"в течение {TIMER_DELAY_IN_SECONDS} секунд."
+    f"в течение {TIMER_DELAY_IN_SECONDS} сек."
 )
 JOINED_GAME_MESSAGE = "{player} в игре"
 JOIN_NON_EXISTENT_GAME_ERROR = (

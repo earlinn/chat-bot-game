@@ -5,7 +5,7 @@ from sqlalchemy import and_, select, update
 from sqlalchemy.orm import selectinload
 
 from app.base.base_accessor import BaseAccessor
-from app.game.const import GameStage, GameStatus
+from app.game.const import MINIMAL_BET, GameStage, GameStatus
 from app.game.models import BalanceModel, GameModel, GamePlayModel, PlayerModel
 
 
@@ -108,7 +108,7 @@ class GameAccessor(BaseAccessor):
         return game
 
     async def list_games(self) -> Sequence[GameModel]:
-        """Отдает список всех игр."""
+        """Отдает список всех игр с подгруженными геймплеями."""
         query = select(GameModel).options(selectinload(GameModel.gameplays))
         async with self.app.database.session() as session:
             return await session.scalars(query)
@@ -116,7 +116,9 @@ class GameAccessor(BaseAccessor):
     async def get_active_game_by_chat_id(
         self, chat_id: int
     ) -> GameModel | None:
-        """Ищет в определенном чате активную игру."""
+        """Ищет в определенном чате активную игру с подгруженными геймплеями
+        и игроками.
+        """
         query = (
             select(GameModel)
             .where(
@@ -152,7 +154,7 @@ class GameAccessor(BaseAccessor):
     async def change_game_fields(
         self, game_id: int, new_values: dict[str, Any]
     ) -> GameModel:
-        """Меняет значения полей game."""
+        """Меняет значения полей игры и возвращает обновленную игру."""
         query = (
             update(GameModel)
             .where(GameModel.id == game_id)
@@ -167,8 +169,8 @@ class GameAccessor(BaseAccessor):
     async def change_active_game_stage(
         self, chat_id: int, stage: GameStage
     ) -> GameModel:
-        """Находит активную игру по chat_id, переводит ее на новую стадию
-        и возвращает эту игру.
+        """Находит активную игру (с подгруженными геймплеями и игроками)
+        по chat_id, переводит ее на новую стадию и возвращает эту игру.
         """
         query = (
             update(GameModel)
@@ -190,7 +192,13 @@ class GameAccessor(BaseAccessor):
         return game
 
     async def check_all_players_have_bet(self, game_id: int) -> bool:
-        """Проверяет, что все игроки сделали ставки."""
+        """Проверяет, что все игроки сделали ставки:
+        - получает игру с подгруженными геймплеями,
+        - перебирает все геймплеи, проверяя, что ставка не меньше минимально
+        допустимой (при создании геймплея ставка равна 1, что означает, что
+        игрок еще не делал ставку),
+        - возвращает результат проверки.
+        """
         query = (
             select(GameModel)
             .where(GameModel.id == game_id)
@@ -201,7 +209,8 @@ class GameAccessor(BaseAccessor):
             game_with_gameplays: GameModel = await session.scalar(query)
 
         players_have_bet: list[bool] = [
-            play.player_bet >= 10 for play in game_with_gameplays.gameplays
+            play.player_bet >= MINIMAL_BET
+            for play in game_with_gameplays.gameplays
         ]
         return all(players_have_bet)
 
@@ -236,7 +245,7 @@ class GamePlayAccessor(BaseAccessor):
     async def change_gameplay_fields(
         self, gameplay_id: int, new_values: dict[str, Any]
     ) -> GamePlayModel:
-        """Меняет значения полей gameplay."""
+        """Меняет значения полей геймплея и возвращает геймплей."""
         query = (
             update(GamePlayModel)
             .where(GamePlayModel.id == gameplay_id)

@@ -36,6 +36,7 @@ class Router:
 
     async def _process_message_update(self, message: Message) -> None:
         """Обрабатывает update типа message."""
+        # TODO: надо сразу добавлять в BotContext поле username
         bot_context: BotContext = await self._get_bot_context(message.chat)
         current_game: (
             GameModel | None
@@ -56,6 +57,7 @@ class Router:
         """Обрабатывает update типа callback_query: получает контекст для бота,
         информацию об игре и отправляет запрос в BotManager.
         """
+        # TODO: надо сразу добавлять в BotContext поле username
         bot_context: BotContext = await self._get_bot_context(
             callback_query.message.chat
         )

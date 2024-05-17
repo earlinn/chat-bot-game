@@ -18,7 +18,7 @@ if typing.TYPE_CHECKING:
 
 
 class BotManager:
-    """Класс для отправки сообщений от имени бота."""
+    """Класс для отправки сообщений от имени бота и запуска таймеров."""
 
     def __init__(self, app: "Application"):
         """Подключается к app и к логгеру."""
@@ -42,7 +42,9 @@ class BotManager:
         await coro
 
     async def say_hi_and_play(self, context: BotContext):
-        """Печатает приветствие и кнопки 'Новая игра' и 'Правила игры'."""
+        """Печатает приветствие и кнопки 'Новая игра', 'Мой баланс' и
+        'Правила игры'.
+        """
         button_message = SendMessage(
             chat_id=context.chat_id,
             text=const.WELCOME_MESSAGE,
@@ -65,7 +67,7 @@ class BotManager:
         await self.tg_api.send_message(button_message, any_buttons_present=True)
 
     async def say_hi_and_wait(self, context: BotContext):
-        """Печатает приветствие и кнопку 'Правила игры',
+        """Печатает приветствие и кнопки 'Правила игры' и 'Мой баланс',
         предлагает дождаться окончания текущей игры.
         """
         button_message = SendMessage(
@@ -272,7 +274,9 @@ class BotManager:
         )
 
     async def say_game_results(self, context: BotContext):
-        """Печатает итоги игры и кнопки 'Новая игра' и 'Правила игры'."""
+        """Печатает итоги игры и кнопки 'Новая игра', 'Мой баланс' и
+        'Правила игры'.
+        """
         button_message = SendMessage(
             chat_id=context.chat_id,
             text=context.message,
@@ -305,7 +309,10 @@ class BotManager:
         )
 
     async def say_wrong_status_to_take_cards(self, context: BotContext):
-        """Печатает сообщение, что данный игрок уже не может брать карты."""
+        """Печатает сообщение, что данный игрок уже не может брать карты
+        (для случаев, когда игрок нажал на 'Достаточно карт', но затем пытается
+        взять еще карты).
+        """
         await self.tg_api.send_message(
             SendMessage(
                 chat_id=context.chat_id,
