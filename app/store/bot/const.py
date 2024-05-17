@@ -19,7 +19,7 @@ START_TIMER_MESSAGE = (
     "Начинаем новую игру. Чтобы присоединиться к игре, нажмите на кнопку ниже "
     f"в течение {TIMER_DELAY_IN_SECONDS} секунд."
 )
-JOINED_GAME_MESSAGE = "{username} в игре"
+JOINED_GAME_MESSAGE = "{player} в игре"
 JOIN_NON_EXISTENT_GAME_ERROR = (
     "На данный момент ни одна игра не запущена. Чтобы запустить новую игру, "
     "вызовите игрового бота командой 'start', затем нажмите на кнопку "
@@ -82,7 +82,7 @@ NO_BALANCE_MESSAGE = (
 )
 
 # Cards strings
-PLAYER_CARDS_STR = "{username}:  {player_cards}"
+PLAYER_CARDS_STR = "{player}:  {player_cards}"
 DILLER_CARDS_STR = "\nДиллер:  {diller_cards}"
 
 # Buttons

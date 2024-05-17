@@ -130,9 +130,7 @@ class BotManager:
         await self.tg_api.send_message(
             SendMessage(
                 chat_id=context.chat_id,
-                text=const.JOINED_GAME_MESSAGE.format(
-                    username=context.username
-                ),
+                text=const.JOINED_GAME_MESSAGE.format(player=context.username),
             )
         )
 
