@@ -52,7 +52,6 @@ class GameSchema(Schema):
     created_at = fields.DateTime(required=False)
     status = fields.Str(required=False)
     stage = fields.Str(required=False)
-    turn_player_id = fields.Int(required=False, allow_none=True)
     diller_cards = fields.List(fields.Str, required=True)
     gameplays = fields.Nested(GamePlaySchema, many=True)
 
@@ -63,7 +62,6 @@ class GameUpdateStageSchema(Schema):
     created_at = fields.DateTime(required=False)
     status = fields.Str(required=False)
     stage = fields.Str(required=False)
-    turn_player_id = fields.Int(required=False, allow_none=True)
     diller_cards = fields.List(fields.Str, required=False)
 
 

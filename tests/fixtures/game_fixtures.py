@@ -46,20 +46,3 @@ async def game(db_sessionmaker: async_sessionmaker[AsyncSession]) -> GameModel:
         await session.commit()
 
     return game
-
-
-@pytest.fixture
-async def game_with_turn_player_id(
-    db_sessionmaker: async_sessionmaker[AsyncSession], player: PlayerModel
-) -> GameModel:
-    game: GameModel = GameModel(
-        chat_id=TEST_CHAT_ID,
-        diller_cards=[TEST_DILLER_CARD],
-        turn_player_id=player.id,
-    )
-
-    async with db_sessionmaker() as session:
-        session.add(game)
-        await session.commit()
-
-    return game
