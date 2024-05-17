@@ -1,4 +1,5 @@
 import random
+import re
 import typing
 from logging import getLogger
 
@@ -15,6 +16,8 @@ from app.store.tg_api.dataclasses import CallbackQuery
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application
+
+ACES_REGEX: str = r"A[♦️♠️♥️♣️]"  # regex for "A♦️", "A♠️", "A♥️", "A♣️"
 
 
 class PlayerManager:
@@ -156,9 +159,8 @@ class GameManager:
 
         gameplay.player_cards.append(random.choice(list(CARDS)))
         updated_cards: list[str] = gameplay.player_cards
-        score: int = sum(CARDS[card] for card in updated_cards)
+        score: int = self.process_score_with_aces(updated_cards)
 
-        # TODO: обработать ситуацию с превращением туза в 1 вместо 11
         if score > BLACK_JACK:
             exceeded = True
             new_gameplay_values = {
@@ -195,16 +197,15 @@ class GameManager:
         """Добавляет карты диллеру, пока число его очков не достигнет 17,
         возвращает итоговое число очков диллера.
         """
-        # TODO: обработать ситуацию с превращением туза в 1 вместо 11
         score: int = sum(CARDS[card] for card in game.diller_cards)
-
         while score < DILLER_STOP_SCORE:
             game.diller_cards.append(random.choice(list(CARDS)))
             score: int = sum(CARDS[card] for card in game.diller_cards)
 
+        score_with_aces: int = self.process_score_with_aces(game.diller_cards)
         new_game_values = {"diller_cards": game.diller_cards}
         await self.app.store.games.change_game_fields(game.id, new_game_values)
-        return score
+        return score_with_aces
 
     async def finalize_player_result(
         self,
@@ -226,7 +227,7 @@ class GameManager:
             )
         if player_balance_change:
             await PlayerManager.change_player_balance(
-                gameplay.player_id, chat_id, player_balance_change
+                self, gameplay.player_id, chat_id, player_balance_change
             )
             result_str = message.format(
                 player=gameplay.player.username,
@@ -245,3 +246,16 @@ class GameManager:
                 score=player_score,
             )
         return result_str
+
+    def process_score_with_aces(self, cards: list[str]) -> int:
+        """Определяет суммарное число очков по картам, учитывая, что тузы
+        могут стоить 1 очко вместо 11, если общая сумма превышает 21.
+        """
+        aces: int = sum(1 for card in cards if re.match(ACES_REGEX, card))
+        score: int = sum(CARDS[card] for card in cards)
+
+        while score > BLACK_JACK and aces:
+            score -= 10
+            aces -= 1
+
+        return score
