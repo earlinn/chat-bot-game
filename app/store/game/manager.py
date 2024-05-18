@@ -117,10 +117,21 @@ class GameManager:
 
     async def update_gameplay_bet_status_and_cards(
         self, game: GameModel, query: CallbackQuery, bet_value: int
-    ) -> bool:
-        """Находит геймплей, обновляет в нем статус и ставку игрока, проверяет,
-        все ли игроки сделали ставку, и возвращает результат проверки.
+    ) -> tuple[bool, bool]:
+        """Находит геймплей, генерит 2 случайные карты и проверяет сумму очков.
+
+        Если сумма очков равна 21 (то есть у игрока Блэк Джек), статус
+        геймплея сразу меняется на STANDING, минуя стадию TAKING, а переменной
+        is_black_jack присваивается значение True.
+        Если сумма менее 21, геймплею присваивается статус TAKING.
+        Также в геймплее обновляются данные о картах игрока и его ставке.
+
+        Затем происходит проверка, все ли игроки сделали ставку.
+
+        Метод возвращает кортеж, состоящий из результата этой проверки и
+        значения переменной is_black_jack.
         """
+        is_black_jack = False
         player: PlayerModel = await self.app.store.players.get_player_by_tg_id(
             query.from_.id
         )
@@ -129,13 +140,24 @@ class GameManager:
         )
         new_gameplay_values = {
             "player_bet": bet_value,
-            "player_status": PlayerStatus.TAKING,
             "player_cards": [random.choice(list(CARDS)) for _ in range(2)],
         }
+
+        if (
+            self.process_score_with_aces(new_gameplay_values["player_cards"])
+            == BLACK_JACK
+        ):
+            new_gameplay_values["player_status"] = PlayerStatus.STANDING
+            is_black_jack = True
+        else:
+            new_gameplay_values["player_status"] = PlayerStatus.TAKING
+
         await self.app.store.gameplays.change_gameplay_fields(
             gameplay.id, new_gameplay_values
         )
-        return await self.app.store.games.check_all_players_have_bet(game.id)
+        return await self.app.store.games.check_all_players_have_bet(
+            game.id
+        ), is_black_jack
 
     async def take_a_card(
         self, game: GameModel, query: CallbackQuery

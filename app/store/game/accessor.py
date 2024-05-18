@@ -215,9 +215,9 @@ class GameAccessor(BaseAccessor):
         return all(players_have_bet)
 
     async def cancel_active_game_due_to_timer(
-        self, chat_id: int
+        self, game_id: int
     ) -> GameModel | None:
-        """Находит активную игру на стадии ставок по chat_id и меняет
+        """Находит активную игру на стадии ставок по id и меняет
         ее статус на canceled. Возвращает отмененную игру или None
         (если активной игры на стадии ставок в данном чате нет).
         """
@@ -225,7 +225,7 @@ class GameAccessor(BaseAccessor):
             update(GameModel)
             .where(
                 and_(
-                    GameModel.chat_id == chat_id,
+                    GameModel.id == game_id,
                     GameModel.status == GameStatus.ACTIVE,
                     GameModel.stage == GameStage.BETTING,
                 )

@@ -1,6 +1,6 @@
 # Timer time
 WAITING_STAGE_TIMER_IN_SECONDS = 1  # TODO: change to 30 seconds
-BETTING_STAGE_TIMER_IN_SECONDS = 3  # TODO: change to 30 seconds
+BETTING_STAGE_TIMER_IN_SECONDS = 10  # TODO: change to 60 seconds
 
 # URLs
 GAME_RULES_URL = "https://ru.wikihow.com/играть-в-блэкджек"
@@ -34,6 +34,7 @@ END_WAITING_STAGE_TIMER_MESSAGE = (
     "не сделают ставки, игра будет отменена."
 )
 PLAYER_HAVE_BET_MESSAGE = "{player} ставит {bet} очков."
+PLAYER_BLACK_JACK_MESSAGE = "У {player} на руках блэкджек."
 GAME_PLAYERHIT_STAGE_MESSAGE = (
     "Ставки сделаны. "
     "Теперь вы можете взять себе карту или отказаться брать новые карты.\n\n"

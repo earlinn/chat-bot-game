@@ -156,6 +156,7 @@ class BotManager:
                 chat_id=context.chat_id, stage=GameStage.BETTING
             )
         )
+        context.current_game = current_game
         players: list[PlayerModel] = [
             gameplay.player for gameplay in current_game.gameplays
         ]
@@ -199,13 +200,24 @@ class BotManager:
         self.background_tasks.add(timer_task)
         timer_task.add_done_callback(self.background_tasks.discard)
 
-    async def say_player_have_bet(self, context: BotContext):
+    async def say_player_has_bet(self, context: BotContext):
         """Печатает сообщение, что игрок такой-то сделал ставку такую-то."""
         await self.tg_api.send_message(
             SendMessage(
                 chat_id=context.chat_id,
                 text=const.PLAYER_HAVE_BET_MESSAGE.format(
                     player=context.username, bet=context.bet_value
+                ),
+            )
+        )
+
+    async def say_player_has_blackjack(self, context: BotContext):
+        """Печатает сообщение, что у игрока блэкджек."""
+        await self.tg_api.send_message(
+            SendMessage(
+                chat_id=context.chat_id,
+                text=const.PLAYER_BLACK_JACK_MESSAGE.format(
+                    player=context.username
                 ),
             )
         )
@@ -378,7 +390,7 @@ class BotManager:
         canceled_game: (
             GameModel | None
         ) = await self.app.store.games.cancel_active_game_due_to_timer(
-            context.chat_id
+            context.current_game.id
         )
         if canceled_game:
             button_message = SendMessage(

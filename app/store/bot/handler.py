@@ -17,12 +17,6 @@ if typing.TYPE_CHECKING:
     from app.web.app import Application
 
 
-# TODO: (на после MVP) если игроку при начальной раздаче карт достались 2 карты,
-# которые в сумме равны 21 (т.е. туз и другая карта-картинка), то его статус
-# сразу меняется на STANDING, чтобы он по глупости не взял себе еще карту
-# (потому что в настоящем Блэкджеке он в этой ситуации сразу выигрывает,
-# если только диллеру первой картой тоже не досталась картинка, тогда есть
-# вероятность, что игрок и диллер сыграют вничью)
 class BotHandler:
     """Класс для обработки запросов к боту."""
 
@@ -67,6 +61,7 @@ class BotHandler:
             )
             game: GameModel = await self.game_manager.get_game(context.chat_id)
             await self.game_manager.get_gameplay(game.id, player.id)
+            context.current_game = game
             await self.bot_manager.say_join_new_game(context)
             await self.bot_manager.say_player_joined(context)
 
@@ -186,10 +181,15 @@ class BotHandler:
             wrong_button = True
 
         if not wrong_button:
-            all_players_have_bet: bool = await self._handle_bet(
+            all_players_have_bet, is_black_jack = await self._handle_bet(
                 game, query, context, bet_value
             )
-            if all_players_have_bet:
+            if is_black_jack and all_players_have_bet:
+                await self.bot_manager.say_player_has_blackjack(context)
+                await self._handle_game_dillerhit_stage(context)
+            elif is_black_jack:
+                await self.bot_manager.say_player_has_blackjack(context)
+            elif all_players_have_bet:
                 await self._handle_playerhit_initial(context)
 
     async def _handle_bet(
@@ -198,12 +198,16 @@ class BotHandler:
         query: CallbackQuery,
         context: BotContext,
         bet_value: int,
-    ) -> bool:
-        """Обрабатывает ставку отдельного игрока, проверяет, остались ли игроки,
-        не сделавшие ставку, и возвращает результат этой проверки.
+    ) -> tuple[bool, bool]:
+        """Обрабатывает ставку отдельного игрока, генерить игроку две случайные
+        карты, проверяет, есть ли у игрока блэкджек и остались ли игроки,
+        не сделавшие ставку.
+        Возвращает результаты двух проверок:
+        - наличия игроков, не сделавших ставку,
+        - нет ли у игрока блэкджека после генерации 2 случайныз карт.
         """
         context.bet_value = bet_value
-        await self.bot_manager.say_player_have_bet(context)
+        await self.bot_manager.say_player_has_bet(context)
         return await self.game_manager.update_gameplay_bet_status_and_cards(
             game, query, bet_value
         )
