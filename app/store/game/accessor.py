@@ -98,10 +98,15 @@ class PlayerAccessor(BaseAccessor):
 
 class GameAccessor(BaseAccessor):
     async def create_game(
-        self, chat_id: int, diller_cards: list[str]
+        self,
+        chat_id: int,
+        diller_cards: list[str],
+        gameplays: list[GamePlayModel],
     ) -> GameModel:
         """Создает и отдает игру."""
-        game = GameModel(chat_id=chat_id, diller_cards=diller_cards)
+        game = GameModel(
+            chat_id=chat_id, diller_cards=diller_cards, gameplays=gameplays
+        )
         async with self.app.database.session() as session:
             session.add(game)
             await session.commit()

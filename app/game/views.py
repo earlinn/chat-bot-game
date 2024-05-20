@@ -10,6 +10,7 @@ from app.web.app import View
 from app.web.mixins import AuthRequiredMixin
 from app.web.utils import json_response
 
+from .models import GamePlayModel
 from .schemes import (
     BalanceListSchema,
     BalanceSchema,
@@ -83,9 +84,19 @@ class GameAddView(AuthRequiredMixin, View):
     @request_schema(GameSchema)
     @response_schema(GameSchema, 201)
     async def post(self):
-        chat_id, diller_cards = self.data["chat_id"], self.data["diller_cards"]
+        chat_id: int = self.data["chat_id"]
+        diller_cards: list[str] = self.data["diller_cards"]
+        gameplays: list[GamePlayModel] = self.data["gameplays"]
         game = await self.store.games.create_game(
-            chat_id=chat_id, diller_cards=diller_cards
+            chat_id=chat_id,
+            diller_cards=diller_cards,
+            gameplays=[
+                GamePlayModel(
+                    player_id=gameplay["player_id"],
+                    player_bet=gameplay["player_bet"],
+                )
+                for gameplay in gameplays
+            ],
         )
         return json_response(data=GameSchema().dump(game))
 
