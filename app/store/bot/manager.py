@@ -34,8 +34,11 @@ class BotManager:
         """Запускает таймер на время, указанное в аргументе seconds,
         по прошествии этого времени вызывает корутину coro.
         """
-        await asyncio.sleep(seconds)
-        await coro
+        try:
+            await asyncio.sleep(seconds)
+            await coro
+        except asyncio.CancelledError:
+            pass
 
     async def say_hi_and_play(self, context: BotContext):
         """Печатает приветствие и кнопки 'Новая игра', 'Мой баланс' и
@@ -116,7 +119,7 @@ class BotManager:
         await self.tg_api.send_message(button_message, any_buttons_present=True)
 
         # More info: https://docs.astral.sh/ruff/rules/asyncio-dangling-task/
-        timer_task = asyncio.create_task(
+        timer_task: asyncio.Task = asyncio.create_task(
             self._start_timer(
                 self.say_start_betting_stage(context),
                 const.WAITING_STAGE_TIMER_IN_SECONDS,
@@ -190,7 +193,7 @@ class BotManager:
             ),
         )
         await self.tg_api.send_message(button_message, any_buttons_present=True)
-        timer_task = asyncio.create_task(
+        timer_task: asyncio.Task = asyncio.create_task(
             self._start_timer(
                 self.say_game_was_cancelled_due_to_timer(context),
                 const.BETTING_STAGE_TIMER_IN_SECONDS,

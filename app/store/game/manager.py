@@ -228,15 +228,26 @@ class GameManager:
         """Добавляет карты диллеру, пока число его очков не достигнет 17,
         возвращает итоговое число очков диллера с учетом наличия тузов.
         """
+        aces: int = sum(
+            1 for card in game.diller_cards if re.match(ACES_REGEX, card)
+        )
         score: int = sum(CARDS[card] for card in game.diller_cards)
-        while score < DILLER_STOP_SCORE:
-            game.diller_cards.append(random.choice(list(CARDS)))
-            score: int = sum(CARDS[card] for card in game.diller_cards)
 
-        score_with_aces: int = self.process_score_with_aces(game.diller_cards)
+        while score > BLACK_JACK and aces:
+            score -= 10
+            aces -= 1
+
+        while score < DILLER_STOP_SCORE:
+            new_card: str = random.choice(list(CARDS))
+            if CARDS[new_card] + score > BLACK_JACK and aces:
+                score -= 10
+                aces -= 1
+            score += CARDS[new_card]
+            game.diller_cards.append(new_card)
+
         new_game_values = {"diller_cards": game.diller_cards}
         await self.app.store.games.change_game_fields(game.id, new_game_values)
-        return score_with_aces
+        return score
 
     async def finalize_player_result(
         self,

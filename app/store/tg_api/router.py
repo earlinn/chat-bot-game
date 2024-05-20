@@ -3,7 +3,7 @@ from logging import getLogger
 from app.game.models import GameModel
 from app.store import Store
 from app.store.bot import const
-from app.store.tg_api.dataclasses import CallbackQuery, Chat, Message, Update
+from app.store.tg_api.dataclasses import CallbackQuery, Message, Update
 
 from .dataclasses import BotContext
 
@@ -36,8 +36,8 @@ class Router:
 
     async def _process_message_update(self, message: Message) -> None:
         """Обрабатывает update типа message."""
-        bot_context: BotContext = await self._get_bot_context(
-            chat=message.chat, username=message.from_.username
+        bot_context = BotContext(
+            chat_id=message.chat.id, username=message.from_.username
         )
         current_game: (
             GameModel | None
@@ -58,8 +58,8 @@ class Router:
         """Обрабатывает update типа callback_query: получает контекст для бота,
         информацию об игре и отправляет запрос в BotManager.
         """
-        bot_context: BotContext = await self._get_bot_context(
-            chat=callback_query.message.chat,
+        bot_context = BotContext(
+            chat_id=callback_query.message.chat.id,
             username=callback_query.from_.username,
         )
         current_game: (
@@ -81,14 +81,3 @@ class Router:
             await self.store.bot_handler.handle_no_game_case(
                 callback_query, bot_context
             )
-
-    async def _get_bot_context(
-        self,
-        chat: Chat,
-        current_game: GameModel | None = None,
-        username: str | None = None,
-        bet_value: int | None = None,
-        message: str | None = None,
-    ) -> BotContext:
-        """Собирает контекст в экземпляр класса BotContext."""
-        return BotContext(chat.id, current_game, username, bet_value, message)
