@@ -4,6 +4,8 @@ __all__ = ("setup_routes",)
 
 
 def setup_routes(application: Application):
-    import app.users.routes
+    import app.admin.routes
+    import app.game.routes
 
-    app.users.routes.register_urls(application)
+    app.admin.routes.setup_routes(application)
+    app.game.routes.setup_routes(application)

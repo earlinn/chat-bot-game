@@ -1,0 +1,19 @@
+debug: true
+
+security:
+  token: token
+
+session:
+  key: U-7ifh1kpIhDOBD8jodP0f3zx5Acez8EpVm3VKjPNWc=
+admin:
+  email: admin@admin.com
+  password: admin
+database:
+  host: localhost
+  port: 5432
+  user: postgres
+  password: postgres
+  database: postgres  # поменять на black_jack_bot_test для локальных тестов
+bot:
+  token: token
+  group_id: 1

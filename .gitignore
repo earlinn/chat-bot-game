@@ -176,3 +176,13 @@ pyrightconfig.json
 # End of https://www.toptal.com/developers/gitignore/api/python
 
 .idea
+
+# VSCode staff
+.vscode/
+
+# Examples of Telegram Bot API responses
+getUpdates.json
+sendMessage.json
+
+# TODOs
+todo.txt
