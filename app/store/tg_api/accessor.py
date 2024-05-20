@@ -1,3 +1,4 @@
+import asyncio
 import os
 import typing
 from urllib.parse import urlencode, urljoin
@@ -9,6 +10,8 @@ from app.base.base_accessor import BaseAccessor
 from app.store.tg_api.dataclasses import SendMessage, Update
 from app.store.tg_api.poller import Poller
 from app.web.exceptions import TgGetUpdatesError
+
+from .router import Router
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application
@@ -23,12 +26,21 @@ class TgApiAccessor(BaseAccessor):
         super().__init__(app, *args, **kwargs)
         self.session: ClientSession | None = None
         self.poller: Poller | None = None
+        self.queue: asyncio.Queue | None = None
+        self.router: Router = None
+        self.background_tasks = set()
 
     async def connect(self, app: "Application") -> None:
         self.session = ClientSession(connector=TCPConnector(verify_ssl=False))
-        self.poller = Poller(app.store)
+        self.queue = asyncio.Queue()
+        self.poller = Poller(app.store, self.queue)
         self.logger.info("start polling")
         self.poller.start()
+        self.router = Router(app.store, self.queue)
+        router_task = asyncio.create_task(self.router.route_update())
+        self.logger.info(router_task)
+        self.background_tasks.add(router_task)
+        router_task.add_done_callback(self.background_tasks.discard)
 
     async def disconnect(self, app: "Application") -> None:
         if self.session:
