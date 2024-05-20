@@ -7,11 +7,16 @@ CARDS: dict[str, int] = {
     card + suit: rank for card, rank in RANKS.items() for suit in SUITS
 }
 
+BLACK_JACK = 21
+DILLER_STOP_SCORE = 17
+MINIMAL_BET = 10
+
 
 class GameStatus(enum.StrEnum):
     ACTIVE = "active"
     FINISHED = "finished"
     INTERRUPTED = "interrupted"
+    CANCELED = "canceled"
 
 
 class GameStage(enum.StrEnum):
@@ -26,6 +31,7 @@ class PlayerStatus(enum.StrEnum):
     BETTING = "betting"
     TAKING = "taking"
     STANDING = "standing"
-    EXCEEDED = "exceeded"
-    LOST = "lost"
-    WON = "won"
+    EXCEEDED = "exceeded"  # игрок немедленно проигрывает (его ставка - диллеру)
+    LOST = "lost"  # игрок проигрывает (его ставка - диллеру)
+    WON = "won"  # ставка оплачивается 1:1 (т.е. плюсуем к балансу сумму ставки)
+    TIE = "tie"  # в случае ничьей все остаются при своих

@@ -2,13 +2,18 @@ import json
 from dataclasses import asdict, dataclass
 from typing import Any, Optional
 
+from app.game.models import GameModel
+
 
 @dataclass
-class BotManagerContext:
+class BotContext:
     """Контекст для передачи в методы-обработчики класса BotManager."""
 
     chat_id: int
+    current_game: GameModel | None = None
     username: str | None = None
+    bet_value: int | None = None
+    message: str | None = None
 
 
 @dataclass

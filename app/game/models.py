@@ -19,9 +19,9 @@ from app.web.exceptions import TgUsernameError
 from .const import GameStage, GameStatus, PlayerStatus
 
 TG_USERNAME_REGEX: str = r"^[a-zA-Z0-9_]{5,32}$"
+DEFAULT_NEW_BALANCE = 1000
 intpk = Annotated[int, mapped_column(primary_key=True)]
-int_unique = Annotated[int, mapped_column(unique=True)]
-int_default_1000 = Annotated[int, mapped_column(default=1000)]
+int_default_1000 = Annotated[int, mapped_column(default=DEFAULT_NEW_BALANCE)]
 created_at = Annotated[
     datetime, mapped_column(server_default=text("TIMEZONE('utc', now())"))
 ]
@@ -32,16 +32,16 @@ class PlayerModel(BaseModel):
 
     id: Mapped[intpk]
     username: Mapped[str] = mapped_column(String(32), unique=True)
-    tg_id: Mapped[int_unique]
+    tg_id: Mapped[int] = mapped_column(BigInteger(), unique=True)
 
     balances: Mapped[list["BalanceModel"]] = relationship(
         back_populates="player"
     )
-    turn_player_games: Mapped[list["GameModel"]] = relationship(
-        back_populates="turn_player"
-    )
     gameplays: Mapped[list["GamePlayModel"]] = relationship(
         back_populates="player"
+    )
+    games: Mapped[list["GameModel"]] = relationship(
+        back_populates="players", secondary="gameplays"
     )
 
     @validates("username")
@@ -71,6 +71,17 @@ class BalanceModel(BaseModel):
     )
 
 
+# TODO: добавить поле для таймера, чтобы хранить его не в константе
+# WAITING_STAGE_TIMER_IN_SECONDS, а иметь возможность редактировать через
+# Админку, а константа станет временем по дефолту.
+# Можно сделать одно поле для таймера на стадии присоединения игроков
+# (константа WAITING_STAGE_TIMER_IN_SECONDS) и второе поле для таймера на стадии
+# ставок (константа BETTING_STAGE_TIMER_IN_SECONDS).
+# TODO: добавить поле для минимальных очков диллера, чтобы хранить его не в
+# константе DILLER_STOP_SCORE, а иметь возможность редактировать через Админку,
+# а константа станет количеством очков по дефолту
+# TODO: можно управлять размером минимальной ставки (константа MINIMAL_BET) или
+# даже всеми предлагаемыми ставками (их количеством и значениями) через Админку
 class GameModel(BaseModel):
     __tablename__ = "games"
 
@@ -81,20 +92,13 @@ class GameModel(BaseModel):
     stage: Mapped[GameStage] = mapped_column(
         default=GameStage.WAITING_FOR_PLAYERS_TO_JOIN
     )
-    turn_player_id: Mapped[int] = mapped_column(
-        ForeignKey("players.id", ondelete="CASCADE"),
-        nullable=True,
-        default=None,
-    )
-    diller_cards: Mapped[list[str]] = mapped_column(
-        ARRAY(String)
-    )  # TODO: make it json after MVP?
+    diller_cards: Mapped[list[str]] = mapped_column(ARRAY(String))
 
     gameplays: Mapped[list["GamePlayModel"]] = relationship(
         back_populates="game"
     )
-    turn_player: Mapped["PlayerModel"] = relationship(
-        back_populates="turn_player_games"
+    players: Mapped[list["PlayerModel"]] = relationship(
+        back_populates="games", secondary="gameplays"
     )
 
 
@@ -112,9 +116,7 @@ class GamePlayModel(BaseModel):
     player_status: Mapped[PlayerStatus] = mapped_column(
         default=PlayerStatus.BETTING
     )
-    player_cards: Mapped[list[str] | None] = mapped_column(
-        ARRAY(String)
-    )  # TODO: make it json after MVP?
+    player_cards: Mapped[list[str] | None] = mapped_column(ARRAY(String))
 
     game: Mapped["GameModel"] = relationship(back_populates="gameplays")
     player: Mapped["PlayerModel"] = relationship(back_populates="gameplays")
@@ -125,9 +127,3 @@ class GamePlayModel(BaseModel):
             "player_bet > 0", name="positive_player_bet_constraint"
         ),
     )
-
-    # @validates("player_bet")
-    # def validate_player_bet(self, key, value):
-    #     if value <= 0:
-    #         raise ValueError(PLAYER_BET_ERROR)
-    #     return value
