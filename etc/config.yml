@@ -15,7 +15,7 @@ admin:
   email: admin@admin.com
   password: admin
 database:
-  host: localhost  # поменять на localhost для локального запуска вне Docker Compose
+  host: localhost
   port: 5432
   user: postgres
   password: postgres
