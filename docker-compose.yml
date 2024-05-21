@@ -1,6 +1,6 @@
 services:
 
-  postgres:
+  localhost:
     image: postgres:15.0-alpine
     container_name: blackjack_bot_db
     volumes:
@@ -26,7 +26,7 @@ services:
              python main.py"
     restart: always
     depends_on:
-      - postgres
+      - localhost
   
   nginx:
     image: nginx:1.25.3-alpine
