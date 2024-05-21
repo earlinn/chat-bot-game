@@ -1,9 +1,10 @@
+import asyncio
 from logging import getLogger
 
 from app.game.models import GameModel
 from app.store import Store
 from app.store.bot import const
-from app.store.tg_api.dataclasses import CallbackQuery, Message, Update
+from app.store.tg_api.dataclasses import CallbackQuery, Message
 
 from .dataclasses import BotContext
 
@@ -13,26 +14,29 @@ class Router:
     по нужным хендлерам.
     """
 
-    def __init__(self, store: Store) -> None:
+    def __init__(self, store: Store, queue: asyncio.Queue) -> None:
         """Подключается к store и к логгеру."""
         self.store = store
+        self.queue = queue
         self.logger = getLogger("bot router")
 
-    async def route_updates(self, updates: list[Update]) -> None:
-        """Принимает список updates и по одному отправляет их на обработку."""
-        for update in updates:
-            await self._route_update(update)
-
-    async def _route_update(self, update: Update) -> None:
-        """Перенаправляет update в нужный обработчик в зависимости от типа."""
-        message: Message | None = update.message
-        callback_query: CallbackQuery | None = update.callback_query
-        if message:
-            await self._process_message_update(message)
-        elif callback_query:
-            await self._process_callback_query_update(callback_query)
-        else:
-            self.logger.error("Another type of update: %s", update)
+    async def route_update(self) -> None:
+        """Получает по одному update из очереди и перенаправляет в нужный
+        обработчик в зависимости от типа update (message или callback_query).
+        """
+        while True:
+            update = await self.queue.get()
+            try:
+                message: Message | None = update.message
+                callback_query: CallbackQuery | None = update.callback_query
+                if message:
+                    await self._process_message_update(message)
+                elif callback_query:
+                    await self._process_callback_query_update(callback_query)
+                else:
+                    self.logger.error("Another type of update: %s", update)
+            finally:
+                self.queue.task_done()
 
     async def _process_message_update(self, message: Message) -> None:
         """Обрабатывает update типа message."""

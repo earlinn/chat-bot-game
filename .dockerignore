@@ -1,0 +1,8 @@
+**/*cache*/
+**/*.json
+**/*.mp4
+**/todo.txt
+**/.vscode/
+**/.venv/
+**/.github/
+**/.env
