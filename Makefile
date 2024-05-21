@@ -21,3 +21,24 @@ downgrade:
 
 pytest-one-test:
 	pytest tests/<path to test file>.py::<class name>::<method name>
+
+build-compose:
+	sudo docker compose up --build -d --remove-orphans
+
+stop-compose:
+	sudo docker compose stop
+
+start-compose:
+	sudo docker compose start
+
+logs-app:
+	sudo docker logs --tail 50 --follow --timestamps blackjack_bot_app
+
+logs-db:
+	sudo docker logs --tail 50 --follow --timestamps blackjack_bot_db
+
+logs-nginx:
+	sudo docker logs --tail 50 --follow --timestamps blackjack_bot_nginx
+
+ls-app-compose:
+	sudo docker compose exec -it app ls
