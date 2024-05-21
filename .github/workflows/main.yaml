@@ -34,21 +34,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # - name: Wait for PostgreSQL
-      #   run: |
-      #     for i in {1..30}; do
-      #       nc -z db 5432 && echo "Postgres is up" && break
-      #       echo "Waiting for postgres..."
-      #       sleep 1
-      #     done
-
       - name: Run Alembic migrations
         run: alembic upgrade head
-        env:
-          POSTGRES_DB: postgres
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/postgres
 
       - name: Pytest tests
         run: pytest
