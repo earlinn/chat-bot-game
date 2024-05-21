@@ -9,9 +9,10 @@ from .router import Router
 
 
 class Poller:
-    def __init__(self, store: Store) -> None:
+    def __init__(self, store: Store, queue: asyncio.Queue) -> None:
         self.store = store
-        self.router: Router = Router(self.store)
+        self.queue = queue
+        self.router: Router = Router(self.store, self.queue)
         self.is_running = False
         self.poll_task: Task | None = None
 
@@ -38,6 +39,10 @@ class Poller:
                 self.store.logger.exception("Polling was cancelled")
 
     async def poll(self) -> None:
+        """Получает список updates из TgApiAccessor и по одному складывает их
+        в очередь, увеличивая параметр offset на единицу по сравнению с
+        update_id (чтобы не обрабатывать неактуальные updates).
+        """
         offset: int = 0
         while self.is_running:
             try:
@@ -45,7 +50,8 @@ class Poller:
                     offset=offset, timeout=30
                 )
                 if res:
-                    await self.router.route_updates(res)
-                    offset = res[-1].update_id + 1
+                    for update in res:
+                        self.queue.put_nowait(update)
+                        offset = update.update_id + 1
             except TgGetUpdatesError:
                 self.is_running = False
