@@ -7,6 +7,9 @@ fix:
 format:
 	ruff format
 
+run:
+	python3 main.py
+
 alembic-init:
 	alembic init --template async alembic
 
@@ -39,6 +42,9 @@ logs-db:
 
 logs-nginx:
 	sudo docker logs --tail 50 --follow --timestamps blackjack_bot_nginx
+
+logs-rabbit:
+	sudo docker logs --tail 50 --follow --timestamps blackjack_bot_rabbitmq
 
 ls-app-compose:
 	sudo docker compose exec -it app ls

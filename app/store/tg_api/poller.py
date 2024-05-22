@@ -1,18 +1,18 @@
 import asyncio
+import json
+import typing
 from asyncio import Future, Task
 
 from app.store import Store
 from app.web.exceptions import TgGetUpdatesError
 
-from .dataclasses import Update
 from .router import Router
 
 
 class Poller:
-    def __init__(self, store: Store, queue: asyncio.Queue) -> None:
+    def __init__(self, store: Store) -> None:
         self.store = store
-        self.queue = queue
-        self.router: Router = Router(self.store, self.queue)
+        self.router: Router = Router(self.store)
         self.is_running = False
         self.poll_task: Task | None = None
 
@@ -46,12 +46,16 @@ class Poller:
         offset: int = 0
         while self.is_running:
             try:
-                res: list[Update] = await self.store.tg_api.get_updates(
+                updates: list[
+                    dict[str, typing.Any]
+                ] = await self.store.tg_api.get_updates(
                     offset=offset, timeout=30
                 )
-                if res:
-                    for update in res:
-                        self.queue.put_nowait(update)
-                        offset = update.update_id + 1
+                if updates:
+                    for update in updates:
+                        await self.store.tg_api.app.rabbit.publish(
+                            json.dumps(update)
+                        )
+                        offset = update["update_id"] + 1
             except TgGetUpdatesError:
                 self.is_running = False
