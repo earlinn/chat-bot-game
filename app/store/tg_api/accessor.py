@@ -101,6 +101,7 @@ class TgApiAccessor(BaseAccessor):
     async def send_message(
         self, message: SendMessage, any_buttons_present: bool = False
     ) -> None:
+        is_message_sent = False
         if any_buttons_present:
             reply_markup = message.reply_markup.json_reply_markup_keyboard()
             params = {
@@ -111,12 +112,25 @@ class TgApiAccessor(BaseAccessor):
         else:
             params = {"chat_id": message.chat_id, "text": message.text}
 
-        async with self.session.get(
-            self._build_query(
-                API_PATH,
-                "sendMessage",
-                params=params,
-            )
-        ) as response:
-            data = await response.json()
-            self.logger.info(data)
+        while not is_message_sent:
+            async with self.session.get(
+                self._build_query(
+                    API_PATH,
+                    "sendMessage",
+                    params=params,
+                )
+            ) as response:
+                data: dict[str, typing.Any] = await response.json()
+                # self.logger.info(data)  # uncomment to see api responses
+                is_message_sent = data["ok"]
+                retry_after: int = (
+                    data.get("parameters").get("retry_after")
+                    if not is_message_sent and data["error_code"] == 429
+                    else 0
+                )
+                if retry_after:
+                    self.logger.info(
+                        "Error 429: Too Many Requests. Sleep for %s seconds",
+                        retry_after,
+                    )
+                    await asyncio.sleep(retry_after)

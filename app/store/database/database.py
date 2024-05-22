@@ -33,7 +33,7 @@ class Database:
                 self.app.config.database.port,
                 self.app.config.database.database,
             ),
-            echo=True,
+            # echo=True,  # uncomment for verbose sqlalchemy logs
         )
         self.session = async_sessionmaker(
             self.engine, expire_on_commit=False, class_=AsyncSession

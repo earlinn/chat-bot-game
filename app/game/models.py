@@ -40,9 +40,6 @@ class PlayerModel(BaseModel):
     gameplays: Mapped[list["GamePlayModel"]] = relationship(
         back_populates="player"
     )
-    games: Mapped[list["GameModel"]] = relationship(
-        back_populates="players", secondary="gameplays"
-    )
 
     @validates("username")
     def validate_username(self, key: str, value: str):
@@ -96,9 +93,6 @@ class GameModel(BaseModel):
 
     gameplays: Mapped[list["GamePlayModel"]] = relationship(
         back_populates="game"
-    )
-    players: Mapped[list["PlayerModel"]] = relationship(
-        back_populates="games", secondary="gameplays"
     )
 
 
