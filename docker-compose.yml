@@ -1,11 +1,5 @@
 services:
 
-  # приходится называть контейнер с БД localhost вместо db, т.к. workflow
-  # GitHub Actions в сервисе postgres (используем для миграций alembic) по
-  # умолчанию POSTGRES_HOST=localhost, и непонятно, как это изменить на свое
-  # собственное значение. Поэтому в файле etc/config.yml приходится тоже
-  # сохранять host: localhost, чтобы и workflow выпонялся, и проект в докере
-  # поднимался
   postgres:
     image: postgres:15.0-alpine
     container_name: blackjack_bot_db
@@ -13,6 +7,7 @@ services:
       - postgres_data_bjb:/var/lib/postgresql/data/
     restart: always
     environment:
+      - POSTGRES_HOST=${POSTGRES_HOST}  # может убрать?
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}

@@ -6,7 +6,6 @@ from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
-import yaml
 
 from app.admin.models import AdminModel  # noqa
 from app.game.models import PlayerModel  # noqa
@@ -26,10 +25,13 @@ config_path = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), "..", "etc", "config.yml"
 )
 
-with open(config_path) as f:
-    raw_config = yaml.safe_load(f)
-
-app_config = DatabaseConfig(**raw_config["database"])
+app_config = DatabaseConfig(
+    host=os.environ.get("POSTGRES_HOST", "localhost"),
+    port=os.environ.get("POSTGRES_PORT", 5432),
+    user=os.environ.get("POSTGRES_USER", "postgres"),
+    password=os.environ.get("POSTGRES_PASSWORD", "postgres"),
+    database=os.environ.get("POSTGRES_DB", "postgres"),
+)
 
 url = (
     f"postgresql+asyncpg://{app_config.user}:{app_config.password}"
