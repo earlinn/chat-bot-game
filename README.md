@@ -85,9 +85,11 @@ cd chat-bot-game
 Пример содержимого файла:
 ```
 BOT_TOKEN=<токен вашего бота>
+POSTGRES_HOST=postgres
 POSTGRES_DB=postgres
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
+POSTGRES_PORT=5432
 ```
 
 Запустить сборку контейнеров с помощью docker compose: 
@@ -95,7 +97,7 @@ POSTGRES_PASSWORD=postgres
 docker compose up -d --build
 ```
 
-После этого будут созданы и запущены в фоновом режиме контейнеры c postgres, app и nginx.
+После этого будут созданы и запущены в фоновом режиме контейнеры c postgres, app, rabbitmq и nginx.
 
 ## Остановка и повторный запуск контейнеров
 
