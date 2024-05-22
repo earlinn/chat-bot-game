@@ -8,7 +8,7 @@ from aiohttp_session import setup as session_setup
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 
 from app.admin.models import AdminModel
-from app.store import Store, setup_store
+from app.store import Rabbit, Store, setup_store
 from app.store.database.database import Database
 
 from .config import Config, setup_config
@@ -23,6 +23,7 @@ class Application(AiohttpApplication):
     config: Config | None = None
     store: Store | None = None
     database: Database | None = None
+    rabbit: Rabbit | None = None
 
 
 class Request(AiohttpRequest):
