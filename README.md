@@ -73,7 +73,10 @@ _Важно: при работе в Linux или через терминал WSL
 
 Склонировать репозиторий на свой компьютер и перейти в него:
 ```
-git git@github.com:earlinn/chat-bot-game.git
+git clone git@github.com:earlinn/chat-bot-game.git (для клонирования по ssh)
+или
+git clone https://github.com/earlinn/chat-bot-game.git (для клонирования по https)
+
 cd chat-bot-game
 ```
 

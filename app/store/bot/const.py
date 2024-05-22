@@ -1,7 +1,7 @@
 # Timer time
 WAITING_STAGE_TIMER_IN_SECONDS = 10  # TODO: change to 10 seconds
 BETTING_STAGE_TIMER_IN_SECONDS = 15  # TODO: change to 15 seconds
-PLAYERHIT_STAGE_TIMER_IN_SECONDS = 45  # TODO: change to 45 seconds
+PLAYERHIT_STAGE_TIMER_IN_SECONDS = 45  # TODO: пока не используется
 
 # URLs
 GAME_RULES_URL = "https://ru.wikihow.com/играть-в-блэкджек"
