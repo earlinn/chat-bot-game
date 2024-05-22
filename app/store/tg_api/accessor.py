@@ -1,5 +1,4 @@
 import asyncio
-import os
 import typing
 from urllib.parse import urlencode, urljoin
 
@@ -7,7 +6,7 @@ from aiohttp import TCPConnector
 from aiohttp.client import ClientSession
 
 from app.base.base_accessor import BaseAccessor
-from app.store.tg_api.dataclasses import SendMessage, Update
+from app.store.tg_api.dataclasses import SendMessage
 from app.store.tg_api.poller import Poller
 from app.web.exceptions import TgGetUpdatesError
 
@@ -17,26 +16,24 @@ if typing.TYPE_CHECKING:
     from app.web.app import Application
 
 
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "token")
-API_PATH = f"https://api.telegram.org/bot{BOT_TOKEN}/"
-
-
 class TgApiAccessor(BaseAccessor):
     def __init__(self, app: "Application", *args, **kwargs):
         super().__init__(app, *args, **kwargs)
         self.session: ClientSession | None = None
         self.poller: Poller | None = None
-        self.queue: asyncio.Queue | None = None
         self.router: Router = None
         self.background_tasks = set()
+        self.api_path: str = ""
 
     async def connect(self, app: "Application") -> None:
         self.session = ClientSession(connector=TCPConnector(verify_ssl=False))
-        self.queue = asyncio.Queue()
-        self.poller = Poller(app.store, self.queue)
+        self.api_path: str = (
+            f"https://api.telegram.org/bot{app.config.bot.token}/"
+        )
+        self.poller = Poller(app.store)
         self.logger.info("start polling")
         self.poller.start()
-        self.router = Router(app.store, self.queue)
+        self.router = Router(app.store)
         router_task = asyncio.create_task(self.router.route_update())
         self.logger.info(router_task)
         self.background_tasks.add(router_task)
@@ -59,7 +56,7 @@ class TgApiAccessor(BaseAccessor):
         limit: int = 100,
         timeout: int = 0,
         allowed_updates: list[str] | None = None,
-    ) -> list[Update]:
+    ) -> list[dict[str, typing.Any]]:
         params = {}
         if offset:
             params["offset"] = offset
@@ -72,12 +69,12 @@ class TgApiAccessor(BaseAccessor):
 
         async with self.session.get(
             self._build_query(
-                host=API_PATH,
+                host=self.api_path,
                 method="getUpdates",
                 params=params,
             )
         ) as response:
-            data = await response.json()
+            data: dict[str, typing.Any] = await response.json()
 
             if not data["ok"]:
                 self.logger.error(
@@ -93,9 +90,7 @@ class TgApiAccessor(BaseAccessor):
             if not data.get("result"):
                 return []
 
-            updates: list[Update] = [
-                Update.from_dict(update) for update in data.get("result")
-            ]
+            updates: list[dict[str, typing.Any]] = data.get("result")
             return updates
 
     async def send_message(
@@ -115,7 +110,7 @@ class TgApiAccessor(BaseAccessor):
         while not is_message_sent:
             async with self.session.get(
                 self._build_query(
-                    API_PATH,
+                    self.api_path,
                     "sendMessage",
                     params=params,
                 )

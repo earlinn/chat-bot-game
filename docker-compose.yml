@@ -1,24 +1,31 @@
 services:
 
-  # приходится называть контейнер с БД localhost вместо db, т.к. workflow
-  # GitHub Actions в сервисе postgres (используем для миграций alembic) по
-  # умолчанию POSTGRES_HOST=localhost, и непонятно, как это изменить на свое
-  # собственное значение. Поэтому в файле etc/config.yml приходится тоже
-  # сохранять host: localhost, чтобы и workflow выпонялся, и проект в докере
-  # поднимался
-  localhost:
+  postgres:
     image: postgres:15.0-alpine
     container_name: blackjack_bot_db
     volumes:
       - postgres_data_bjb:/var/lib/postgresql/data/
     restart: always
     environment:
+      - POSTGRES_HOST=${POSTGRES_HOST}  # может убрать?
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
       - 5433:5432
   
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: blackjack_bot_rabbitmq
+    ports:
+      - 15672:15672
+      - 5673:5672
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+
   app:
     build: ./
     image: blackjack_bot_app
@@ -32,8 +39,11 @@ services:
              python main.py"
     restart: always
     depends_on:
-      - localhost
-  
+      postgres:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+
   nginx:
     image: nginx:1.25.3-alpine
     container_name: blackjack_bot_nginx

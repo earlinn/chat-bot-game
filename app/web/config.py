@@ -1,3 +1,4 @@
+import os
 import typing
 from dataclasses import dataclass
 
@@ -21,7 +22,6 @@ class AdminConfig:
 @dataclass
 class BotConfig:
     token: str
-    group_id: int
 
 
 @dataclass
@@ -34,11 +34,19 @@ class DatabaseConfig:
 
 
 @dataclass
+class RabbitConfig:
+    host: str
+    user: str
+    password: str
+
+
+@dataclass
 class Config:
     admin: AdminConfig
     session: SessionConfig | None = None
     bot: BotConfig | None = None
     database: DatabaseConfig | None = None
+    rabbit: RabbitConfig | None = None
 
 
 def setup_config(app: "Application", config_path: str):
@@ -54,8 +62,18 @@ def setup_config(app: "Application", config_path: str):
             password=raw_config["admin"]["password"],
         ),
         bot=BotConfig(
-            token=raw_config["bot"]["token"],
-            group_id=raw_config["bot"]["group_id"],
+            token=os.environ.get("BOT_TOKEN", "token"),
         ),
-        database=DatabaseConfig(**raw_config["database"]),
+        database=DatabaseConfig(
+            host=os.environ.get("POSTGRES_HOST", "localhost"),
+            port=os.environ.get("POSTGRES_PORT", 5432),
+            user=os.environ.get("POSTGRES_USER", "postgres"),
+            password=os.environ.get("POSTGRES_PASSWORD", "postgres"),
+            database=os.environ.get("POSTGRES_DB", "postgres"),
+        ),
+        rabbit=RabbitConfig(
+            host=raw_config["rabbitmq"]["host"],
+            user=raw_config["rabbitmq"]["user"],
+            password=raw_config["rabbitmq"]["password"],
+        ),
     )
