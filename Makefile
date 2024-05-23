@@ -10,6 +10,12 @@ format:
 run:
 	python3 main.py
 
+run-django:
+	cd djangoadmin; python3 manage.py runserver
+
+collectstatic:
+	cd djangoadmin; python3 manage.py collectstatic --no-input
+
 alembic-init:
 	alembic init --template async alembic
 
@@ -18,6 +24,12 @@ makemig:
 
 migrate:
 	alembic upgrade head
+
+makemig-compose:
+	sudo docker compose exec -it app alembic revision --autogenerate -m "<name of migration>"
+
+migrate-compose:
+	sudo docker compose exec -it app alembic upgrade head
 
 downgrade:
 	alembic downgrade -1
@@ -34,8 +46,20 @@ stop-compose:
 start-compose:
 	sudo docker compose start
 
+collectstatic-compose:
+	sudo docker compose exec -it djangoadmin python manage.py collectstatic --no-input
+
+superuser-compose:
+	sudo docker compose exec -it djangoadmin python manage.py createsuperuser --email admin@admin.com --username admin -v 3
+
+ls-container:
+	sudo docker container ls -a
+
 logs-app:
 	sudo docker logs --tail 50 --follow --timestamps blackjack_bot_app
+
+logs-djangoadmin:
+	sudo docker logs --tail 50 --follow --timestamps blackjack_bot_djangoadmin
 
 logs-db:
 	sudo docker logs --tail 50 --follow --timestamps blackjack_bot_db
@@ -48,3 +72,6 @@ logs-rabbit:
 
 ls-app-compose:
 	sudo docker compose exec -it app ls
+
+ls-djangoadmin-compose:
+	sudo docker compose exec -it djangoadmin ls
