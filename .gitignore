@@ -189,3 +189,6 @@ todo.txt
 
 # Screencasts
 *.mp4
+
+# Django static
+static/

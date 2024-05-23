@@ -29,7 +29,9 @@ exclude = [
     "env",
     "etc",
     "requirements",
-    "venv"
+    "venv",
+    "djangoadmin/djangoadmin/settings.py",
+    "djangoadmin/manage.py",
 ]
 
 [tool.ruff.format]
