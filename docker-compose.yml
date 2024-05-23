@@ -28,8 +28,9 @@ services:
       retries: 3
 
   app:
-    build: ./
-    image: blackjack_bot_app
+    # build: ./
+    # image: blackjack_bot_app
+    image: earlinn/blackjackbot_app:v.01
     container_name: blackjack_bot_app
     env_file:
       - ./.env
@@ -46,8 +47,9 @@ services:
         condition: service_healthy
   
   djangoadmin:
-    build: ./djangoadmin
-    image: blackjack_bot_djangoadmin
+    # build: ./djangoadmin
+    # image: blackjack_bot_djangoadmin
+    image: earlinn/blackjackbot_djangoadmin:v.01
     container_name: blackjack_bot_djangoadmin
     volumes:
       - static_value:/app/staticdjango/
