@@ -9,9 +9,10 @@ from .models import TG_USERNAME_REGEX
 class PlayerSchema(Schema):
     id = fields.Int(required=False)
     username = fields.Str(
-        required=True,
+        required=False,
         validate=Regexp(regex=TG_USERNAME_REGEX, error=TG_USERNAME_ERROR),
     )
+    first_name = fields.Str(required=True)
     tg_id = fields.Int(required=True)
 
 

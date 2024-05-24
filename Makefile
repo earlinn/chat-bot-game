@@ -26,10 +26,10 @@ migrate:
 	alembic upgrade head
 
 makemig-compose:
-	sudo docker compose exec -it app alembic revision --autogenerate -m "<name of migration>"
+	sudo docker compose -f docker-compose.local.yml exec -it app alembic revision --autogenerate -m "<name of migration>"
 
 migrate-compose:
-	sudo docker compose exec -it app alembic upgrade head
+	sudo docker compose -f docker-compose.local.yml exec -it app alembic upgrade head
 
 downgrade:
 	alembic downgrade -1
@@ -38,19 +38,19 @@ pytest-one-test:
 	pytest tests/<path to test file>.py::<class name>::<method name>
 
 build-compose:
-	sudo docker compose up --build -d --remove-orphans
+	sudo docker compose -f docker-compose.local.yml up --build -d --remove-orphans
 
 stop-compose:
-	sudo docker compose stop
+	sudo docker compose -f docker-compose.local.yml stop
 
 start-compose:
-	sudo docker compose start
+	sudo docker compose -f docker-compose.local.yml start
 
 collectstatic-compose:
-	sudo docker compose exec -it djangoadmin python manage.py collectstatic --no-input
+	sudo docker compose -f docker-compose.local.yml exec -it djangoadmin python manage.py collectstatic --no-input
 
 superuser-compose:
-	sudo docker compose exec -it djangoadmin python manage.py createsuperuser --email admin@admin.com --username admin -v 3
+	sudo docker compose -f docker-compose.local.yml exec -it djangoadmin python manage.py createsuperuser --email admin@admin.com --username admin -v 3
 
 ls-container:
 	sudo docker container ls -a
@@ -71,7 +71,7 @@ logs-rabbit:
 	sudo docker logs --tail 50 --follow --timestamps blackjack_bot_rabbitmq
 
 ls-app-compose:
-	sudo docker compose exec -it app ls
+	sudo docker compose -f docker-compose.local.yml exec -it app ls
 
 ls-djangoadmin-compose:
-	sudo docker compose exec -it djangoadmin ls
+	sudo docker compose -f docker-compose.local.yml exec -it djangoadmin ls

@@ -5,8 +5,8 @@ from .models import Balance, Game, GamePlay, Player
 
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
-    list_display = ["pk", "username", "tg_id"]
-    list_display_links = ["username"]
+    list_display = ["pk", "username", "first_name", "tg_id"]
+    list_display_links = ["first_name"]
 
 
 @admin.register(Balance)
