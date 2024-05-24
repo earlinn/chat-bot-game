@@ -1,8 +1,38 @@
-name: Check homework
-on: [push]
+name: Chat Bot Game Workflow
+
+on:
+  push:
+    branches:
+
 jobs:
-  lint_and_tests:
+  lint:
     runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Send start message
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            ${{ github.workflow }} started!
+
+            Repository: ${{ github.repository }}.
+            Branch name: ${{ github.ref_name }}.
+            Commit author: ${{ github.actor }}.
+            Commit message: ${{ github.event.commits[0].message }}.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+
+      - name: Install ruff
+        run: pip install ruff==0.4.2
+      - run: ruff format --check && ruff check --no-fix
+  
+  tests:
+    runs-on: ubuntu-latest
+    needs: lint
 
     services:
       postgres:
@@ -25,10 +55,6 @@ jobs:
         with:
           python-version: 3.12
 
-      - name: Install ruff
-        run: pip install ruff==0.4.2
-      - run: ruff format --check && ruff check --no-fix
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -39,3 +65,83 @@ jobs:
 
       - name: Pytest tests
         run: pytest
+      
+      - name: Send success message after tests
+        if: ${{ github.ref != 'refs/heads/main' }}
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            ${{ github.workflow }} completed successfully!
+
+            Repository: ${{ github.repository }}.
+            Branch name: ${{ github.ref_name }}.
+            Commit author: ${{ github.actor }}.
+            Commit message: ${{ github.event.commits[0].message }}.
+            See changes: https://github.com/${{ github.repository }}/commit/${{github.sha}}
+  
+  build_and_push_to_docker_hub:
+    name: Push Docker image to Docker Hub
+    runs-on: ubuntu-latest
+    needs: tests
+
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to Docker
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Push main app to Docker Hub
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/blackjackbot_app:v.01
+      - name: Push Django admin to Docker Hub
+        uses: docker/build-push-action@v5
+        with:
+          context: ./djangoadmin
+          file: ./Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/blackjackbot_djangoadmin:v.01
+  
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build_and_push_to_docker_hub
+    steps:
+      - name: executing remote ssh commands to deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.HOST_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            echo ${{ secrets.HOST_USER_PASSWORD }} | sudo -S docker compose stop
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/blackjackbot_app:v.01
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/blackjackbot_djangoadmin:v.01
+            sudo docker compose up -d --remove-orphans
+            echo ${{ secrets.HOST_USER_PASSWORD }} | sudo -S docker image prune -f
+  
+  send_message:
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - name: send message
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            ${{ github.workflow }} completed successfully!
+            Repository: ${{ github.repository }}.
+            Branch name: ${{ github.ref_name }}.
+            Commit author: ${{ github.actor }}.
+            Commit message: ${{ github.event.commits[0].message }}.
+            See changes: https://github.com/${{ github.repository }}/commit/${{github.sha}}

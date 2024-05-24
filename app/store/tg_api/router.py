@@ -1,12 +1,10 @@
-import json
+import asyncio
 from logging import getLogger
-
-import aio_pika
 
 from app.game.models import GameModel
 from app.store import Store
 from app.store.bot import const
-from app.store.tg_api.dataclasses import CallbackQuery, Message, Update
+from app.store.tg_api.dataclasses import CallbackQuery, Message
 
 from .dataclasses import BotContext
 
@@ -16,9 +14,10 @@ class Router:
     по нужным хендлерам.
     """
 
-    def __init__(self, store: Store) -> None:
+    def __init__(self, store: Store, queue: asyncio.Queue) -> None:
         """Подключается к store и к логгеру."""
         self.store = store
+        self.queue = queue
         self.logger = getLogger("bot router")
 
     async def route_update(self) -> None:
@@ -26,12 +25,7 @@ class Router:
         обработчик в зависимости от типа update (message или callback_query).
         """
         while True:
-            update_message: aio_pika.Message = (
-                await self.store.tg_api.app.rabbit.consume()
-            )
-            update: Update = Update.from_dict(
-                json.loads(update_message.body.decode())
-            )
+            update = await self.queue.get()
             try:
                 message: Message | None = update.message
                 callback_query: CallbackQuery | None = update.callback_query
@@ -42,7 +36,7 @@ class Router:
                 else:
                     self.logger.error("Another type of update: %s", update)
             finally:
-                await update_message.ack()
+                self.queue.task_done()
 
     async def _process_message_update(self, message: Message) -> None:
         """Обрабатывает update типа message."""
