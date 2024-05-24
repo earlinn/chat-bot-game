@@ -10,7 +10,9 @@ async def player(
     db_sessionmaker: async_sessionmaker[AsyncSession],
 ) -> PlayerModel:
     player: PlayerModel = PlayerModel(
-        username=TEST_PLAYER_VALID_USERNAME, tg_id=TEST_PLAYER_TG_ID
+        username=TEST_PLAYER_VALID_USERNAME,
+        tg_id=TEST_PLAYER_TG_ID,
+        first_name=TEST_PLAYER_FIRST_NAME,
     )
 
     async with db_sessionmaker() as session:

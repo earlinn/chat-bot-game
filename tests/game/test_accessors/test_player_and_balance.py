@@ -14,7 +14,9 @@ from tests.utils import (
 class TestPlayerAccessor:
     async def test_create_player(self, store: Store):
         new_player: PlayerModel = await store.players.create_player(
-            username=TEST_PLAYER_VALID_USERNAME, tg_id=TEST_PLAYER_TG_ID
+            username=TEST_PLAYER_VALID_USERNAME,
+            tg_id=TEST_PLAYER_TG_ID,
+            first_name=TEST_PLAYER_FIRST_NAME,
         )
 
         assert isinstance(new_player, PlayerModel)
