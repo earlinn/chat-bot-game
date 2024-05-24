@@ -165,9 +165,7 @@ class BotManager:
         ]
         players_str: str = ", ".join(
             [
-                player.first_name
-                if player.first_name
-                else player.username
+                player.first_name if player.first_name else player.username
                 for player in players
             ]
         )

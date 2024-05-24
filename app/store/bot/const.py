@@ -67,9 +67,7 @@ UNKNOWN_MESSAGE = "Неизвестная команда"
 BUTTON_NO_MATCH_STAGE_MESSAGE = (
     "Данная кнопка не соответствует текущей стадии игры."
 )
-WRONG_STATUS_TO_TAKE_CARD_MESSAGE = (
-    "{player}, вы больше не можете брать карты."
-)
+WRONG_STATUS_TO_TAKE_CARD_MESSAGE = "{player}, вы больше не можете брать карты."
 NOT_GAME_USER_MESSAGE = "{player}, вы не являетесь игроком в текущей игре."
 MY_BALANCE_MESSAGE = "{player}, ваш баланс в этом чате составляет {value}."
 NO_BALANCE_MESSAGE = (
