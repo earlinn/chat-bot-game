@@ -14,18 +14,18 @@ services:
     ports:
       - 5433:5432
   
-  rabbitmq:
-    image: rabbitmq:3-management-alpine
-    container_name: blackjack_bot_rabbitmq
-    restart: always
-    ports:
-      - 15672:15672
-      - 5673:5672
-    healthcheck:
-      test: rabbitmq-diagnostics -q ping
-      interval: 30s
-      timeout: 30s
-      retries: 3
+  # rabbitmq:
+  #   image: rabbitmq:3-management-alpine
+  #   container_name: blackjack_bot_rabbitmq
+  #   restart: always
+  #   ports:
+  #     - 15672:15672
+  #     - 5673:5672
+  #   healthcheck:
+  #     test: rabbitmq-diagnostics -q ping
+  #     interval: 30s
+  #     timeout: 30s
+  #     retries: 3
 
   app:
     # build: ./
@@ -43,8 +43,8 @@ services:
     depends_on:
       postgres:
         condition: service_started
-      rabbitmq:
-        condition: service_healthy
+      # rabbitmq:
+      #   condition: service_healthy
   
   djangoadmin:
     # build: ./djangoadmin

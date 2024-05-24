@@ -7,14 +7,8 @@ sentry:
   dsn:
   env: dev
 
-store: {}
-
 session:
   key: U-7ifh1kpIhDOBD8jodP0f3zx5Acez8EpVm3VKjPNWc=
 admin:
   email: admin@admin.com
   password: admin
-rabbitmq:
-  host: rabbitmq  # поменять на localhost для локального запуска вне Docker
-  user: guest
-  password: guest

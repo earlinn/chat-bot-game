@@ -97,7 +97,11 @@ POSTGRES_PORT=5432
 docker compose up -d --build
 ```
 
-После этого будут созданы и запущены в фоновом режиме контейнеры c postgres, app, rabbitmq и nginx.
+После этого будут созданы и запущены в фоновом режиме контейнеры:
+- postgres
+- app (телеграм-бот и aiohttp-админка)
+- djangoadmin (Django-админка)
+- nginx (раздает статику для работы админок)
 
 ## Остановка и повторный запуск контейнеров
 
@@ -112,7 +116,9 @@ docker compose stop
 docker compose start 
 ```
 
-# Админка в Swagger
+# Админка
+
+## Админка в Swagger
 
 При запуске в Docker Compose Админка открывается в Swagger по адресу http://localhost/docs
 
@@ -121,3 +127,8 @@ docker compose start
 указав email admin@admin.com и password: admin (как в файле etc/config.yml).
 
 После этого в Админке можно будет просматривать и создавать игроков, их балансы и игры.
+
+## Админка Django
+
+Также есть вторая админка - встроенная админка Django.
+Она находится по адресу http://localhost/admin/

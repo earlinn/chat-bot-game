@@ -72,8 +72,8 @@ def setup_config(app: "Application", config_path: str):
             database=os.environ.get("POSTGRES_DB", "postgres"),
         ),
         rabbit=RabbitConfig(
-            host=raw_config["rabbitmq"]["host"],
-            user=raw_config["rabbitmq"]["user"],
-            password=raw_config["rabbitmq"]["password"],
+            host=os.environ.get("RABBIT_HOST", "localhost"),
+            user=os.environ.get("RABBIT_USER", "guest"),
+            password=os.environ.get("RABBIT_PASSWORD", "guest"),
         ),
     )
