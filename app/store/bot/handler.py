@@ -57,7 +57,10 @@ class BotHandler:
 
         elif query_message == const.JOIN_GAME_CALLBACK:
             player: PlayerModel = await self.player_manager.get_player(
-                query.from_.id, query.from_.username, context.chat_id
+                query.from_.id,
+                query.from_.username,
+                query.from_.first_name,
+                context.chat_id,
             )
             game: GameModel = await self.game_manager.get_game(context.chat_id)
             await self.game_manager.get_gameplay(game.id, player.id)
@@ -138,7 +141,10 @@ class BotHandler:
 
         if query_message == const.ADD_PLAYER_CALLBACK:
             player: PlayerModel = await self.player_manager.get_player(
-                query.from_.id, query.from_.username, context.chat_id
+                query.from_.id,
+                query.from_.username,
+                query.from_.first_name,
+                context.chat_id,
             )
             await self.game_manager.get_gameplay(game.id, player.id)
             await self.bot_manager.say_player_joined(context)
@@ -216,13 +222,17 @@ class BotHandler:
             )
         )
 
-        players_cards: list[str] = [
-            const.PLAYER_CARDS_STR.format(
-                player=gameplay.player.username,
-                player_cards=self._get_cards_string(gameplay.player_cards),
+        players_cards: list[str] = []
+        for gameplay in refreshed_game.gameplays:
+            player_name: str = (
+                gameplay.player.first_name or gameplay.player.username
             )
-            for gameplay in refreshed_game.gameplays
-        ]
+            players_cards.append(
+                const.PLAYER_CARDS_STR.format(
+                    player=player_name,
+                    player_cards=self._get_cards_string(gameplay.player_cards),
+                )
+            )
         diller_card_str = const.DILLER_CARDS_STR.format(
             diller_cards=self._get_cards_string(refreshed_game.diller_cards)
         )

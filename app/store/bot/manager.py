@@ -164,7 +164,7 @@ class BotManager:
             gameplay.player for gameplay in current_game.gameplays
         ]
         players_str: str = ", ".join(
-            ["@" + player.username for player in players]
+            [player.first_name or player.username for player in players]
         )
         button_message = SendMessage(
             chat_id=context.chat_id,

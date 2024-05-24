@@ -33,11 +33,11 @@ class DatabaseConfig:
     database: str = "project"
 
 
-@dataclass
-class RabbitConfig:
-    host: str
-    user: str
-    password: str
+# @dataclass
+# class RabbitConfig:
+#     host: str
+#     user: str
+#     password: str
 
 
 @dataclass
@@ -46,7 +46,7 @@ class Config:
     session: SessionConfig | None = None
     bot: BotConfig | None = None
     database: DatabaseConfig | None = None
-    rabbit: RabbitConfig | None = None
+    # rabbit: RabbitConfig | None = None
 
 
 def setup_config(app: "Application", config_path: str):
@@ -71,9 +71,9 @@ def setup_config(app: "Application", config_path: str):
             password=os.environ.get("POSTGRES_PASSWORD", "postgres"),
             database=os.environ.get("POSTGRES_DB", "postgres"),
         ),
-        rabbit=RabbitConfig(
-            host=os.environ.get("RABBIT_HOST", "localhost"),
-            user=os.environ.get("RABBIT_USER", "guest"),
-            password=os.environ.get("RABBIT_PASSWORD", "guest"),
-        ),
+        # rabbit=RabbitConfig(
+        #     host=os.environ.get("RABBIT_HOST", "localhost"),
+        #     user=os.environ.get("RABBIT_USER", "guest"),
+        #     password=os.environ.get("RABBIT_PASSWORD", "guest"),
+        # ),
     )

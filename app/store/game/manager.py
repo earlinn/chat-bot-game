@@ -29,7 +29,7 @@ class PlayerManager:
         self.logger = getLogger("player manager")
 
     async def get_player(
-        self, user_id: int, username: str, chat_id: int
+        self, user_id: int, username: str | None, first_name: str, chat_id: int
     ) -> PlayerModel:
         """Получает или создает нового игрока. Если создан новый игрок,
         создает ему баланс для текущего чата. Если новый игрок не создан,
@@ -39,9 +39,17 @@ class PlayerManager:
         created, player = await self.app.store.players.get_or_create(
             model=PlayerModel,
             get_params=[PlayerModel.tg_id == user_id],
-            create_params={"username": username, "tg_id": user_id},
+            create_params={
+                "username": username,
+                "tg_id": user_id,
+                "first_name": first_name,
+            },
         )
         self.logger.info("Player: %s, created: %s", player, created)
+        if not created and not player.first_name:
+            await self.app.store.players.change_player_fields(
+                player.id, {"first_name": first_name}
+            )
         if (
             created
             or not await self.app.store.players.get_balance_by_player_and_chat(
@@ -272,7 +280,7 @@ class GameManager:
                 self, gameplay.player_id, chat_id, player_balance_change
             )
             result_str = message.format(
-                player=gameplay.player.username,
+                player=gameplay.player.first_name,
                 cards=self.app.store.bot_handler._get_cards_string(
                     gameplay.player_cards
                 ),
@@ -281,7 +289,7 @@ class GameManager:
             )
         else:
             result_str = message.format(
-                player=gameplay.player.username,
+                player=gameplay.player.first_name,
                 cards=self.app.store.bot_handler._get_cards_string(
                     gameplay.player_cards
                 ),
