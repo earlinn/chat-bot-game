@@ -54,7 +54,7 @@ class Router:
         elif message.text == "/start" and current_game:
             await self.store.bot_manager.say_hi_and_wait(bot_context)
         else:
-            await self.store.bot_manager.say_unknown_command(bot_context)
+            self.logger.error("Another type of message: %s", message)
 
     async def _process_callback_query_update(
         self, callback_query: CallbackQuery

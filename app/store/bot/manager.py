@@ -86,6 +86,7 @@ class BotManager:
         )
         await self.tg_api.send_message(button_message, any_buttons_present=True)
 
+    # пока не используется
     async def say_unknown_command(self, context: BotContext):
         """Печатает сообщение, что команда неизвестна."""
         await self.tg_api.send_message(

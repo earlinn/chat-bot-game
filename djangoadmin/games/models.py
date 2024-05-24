@@ -23,7 +23,7 @@ class Player(models.Model):
         db_table = "players"
 
     def __str__(self) -> str:
-        return self.first_name
+        return self.first_name or self.username
 
 
 class Balance(models.Model):
