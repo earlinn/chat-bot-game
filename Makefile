@@ -46,6 +46,9 @@ stop-compose:
 start-compose:
 	sudo docker compose -f docker-compose.local.yml start
 
+django-migrate-compose:
+	sudo docker compose -f docker-compose.local.yml exec -it djangoadmin python manage.py migrate
+
 collectstatic-compose:
 	sudo docker compose -f docker-compose.local.yml exec -it djangoadmin python manage.py collectstatic --no-input
 

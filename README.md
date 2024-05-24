@@ -2,6 +2,7 @@
 
 ![Static Badge](https://img.shields.io/badge/Python-FFD43B?style=for-the-badge&logo=python&logoColor=blue) 
 ![Static Badge](https://img.shields.io/badge/aiohttp-%232C5BB4.svg?&style=for-the-badge&logo=aiohttp&logoColor=white)
+![Static Badge](https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=green)
 ![Static Badge](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)
 ![Static Badge](https://img.shields.io/badge/Swagger-85EA2D?style=for-the-badge&logo=Swagger&logoColor=white)
 ![Static Badge](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
@@ -90,11 +91,14 @@ POSTGRES_DB=postgres
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
 POSTGRES_PORT=5432
+RABBIT_HOST=rabbitmq
+RABBIT_USER=guest
+RABBIT_PASSWORD=guest
 ```
 
 Запустить сборку контейнеров с помощью docker compose: 
 ```
-docker compose up -d --build
+docker compose -f docker-compose.local.yml up -d --build
 ```
 
 После этого будут созданы и запущены в фоновом режиме контейнеры:
@@ -108,12 +112,12 @@ docker compose up -d --build
 Для остановки работы приложения можно набрать в терминале команду Ctrl+C или открыть
 второй терминал и выполнить команду:
 ```
-docker compose stop 
+docker compose -f docker-compose.local.yml stop 
 ```
 
 Снова запустить контейнеры без их пересборки можно командой:
 ```
-docker compose start 
+docker compose -f docker-compose.local.yml start 
 ```
 
 # Админка
@@ -132,3 +136,8 @@ docker compose start
 
 Также есть вторая админка - встроенная админка Django.
 Она находится по адресу http://localhost/admin/
+
+Перед первым входом создайте Django-админа командой:
+```
+docker compose -f docker-compose.local.yml exec -it djangoadmin python manage.py createsuperuser
+```
