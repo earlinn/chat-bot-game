@@ -10,11 +10,30 @@ from app.game.models import BalanceModel, GameModel, GamePlayModel, PlayerModel
 
 
 class PlayerAccessor(BaseAccessor):
-    async def create_player(self, username: str, tg_id: int) -> PlayerModel:
+    async def create_player(
+        self, username: str | None, tg_id: int, first_name: str
+    ) -> PlayerModel:
         """Создает и отдает игрока."""
-        player = PlayerModel(username=username, tg_id=tg_id)
+        player = PlayerModel(
+            username=username, tg_id=tg_id, first_name=first_name
+        )
         async with self.app.database.session() as session:
             session.add(player)
+            await session.commit()
+        return player
+
+    async def change_player_fields(
+        self, player_id: int, new_values: dict[str, Any]
+    ) -> PlayerModel:
+        """Меняет значения полей игрока и возвращает обновленного игрока."""
+        query = (
+            update(PlayerModel)
+            .where(PlayerModel.id == player_id)
+            .values(**new_values)
+            .returning(PlayerModel)
+        )
+        async with self.app.database.session() as session:
+            player: PlayerModel = await session.scalar(query)
             await session.commit()
         return player
 

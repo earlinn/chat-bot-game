@@ -31,7 +31,8 @@ class PlayerModel(BaseModel):
     __tablename__ = "players"
 
     id: Mapped[intpk]
-    username: Mapped[str] = mapped_column(String(32), unique=True)
+    username: Mapped[str | None] = mapped_column(String(32), unique=True)
+    first_name: Mapped[str | None]
     tg_id: Mapped[int] = mapped_column(BigInteger(), unique=True)
 
     balances: Mapped[list["BalanceModel"]] = relationship(
@@ -43,7 +44,7 @@ class PlayerModel(BaseModel):
 
     @validates("username")
     def validate_username(self, key: str, value: str):
-        if not re.match(TG_USERNAME_REGEX, value):
+        if value and not re.match(TG_USERNAME_REGEX, value):
             raise TgUsernameError
         return value
 

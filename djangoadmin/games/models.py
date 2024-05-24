@@ -13,7 +13,9 @@ class Player(models.Model):
         max_length=32,
         unique=True,
         validators=[RegexValidator(TG_USERNAME_REGEX)],
+        null=True,
     )
+    first_name = models.CharField(max_length=256)
     tg_id = models.BigIntegerField(unique=True)
 
     class Meta:
@@ -21,7 +23,7 @@ class Player(models.Model):
         db_table = "players"
 
     def __str__(self) -> str:
-        return self.username
+        return self.first_name
 
 
 class Balance(models.Model):

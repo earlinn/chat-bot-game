@@ -28,8 +28,9 @@ class PlayerAddView(AuthRequiredMixin, View):
     @response_schema(PlayerSchema, 201)
     async def post(self):
         username, tg_id = self.data["username"], self.data["tg_id"]
+        first_name = self.data["first_name"]
         player = await self.store.players.create_player(
-            username=username, tg_id=tg_id
+            username=username, tg_id=tg_id, first_name=first_name
         )
         return json_response(data=PlayerSchema().dump(player))
 

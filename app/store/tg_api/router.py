@@ -41,7 +41,7 @@ class Router:
     async def _process_message_update(self, message: Message) -> None:
         """Обрабатывает update типа message."""
         bot_context = BotContext(
-            chat_id=message.chat.id, username=message.from_.username
+            chat_id=message.chat.id, username=message.from_.first_name
         )
         current_game: (
             GameModel | None
@@ -64,7 +64,7 @@ class Router:
         """
         bot_context = BotContext(
             chat_id=callback_query.message.chat.id,
-            username=callback_query.from_.username,
+            username=callback_query.from_.first_name,
         )
         current_game: (
             GameModel | None
