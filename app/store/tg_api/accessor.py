@@ -6,7 +6,7 @@ from aiohttp import TCPConnector
 from aiohttp.client import ClientSession
 
 from app.base.base_accessor import BaseAccessor
-from app.store.tg_api.dataclasses import SendMessage
+from app.store.tg_api.dataclasses import SendMessage, Update
 from app.store.tg_api.poller import Poller
 from app.web.exceptions import TgGetUpdatesError
 
@@ -21,19 +21,21 @@ class TgApiAccessor(BaseAccessor):
         super().__init__(app, *args, **kwargs)
         self.session: ClientSession | None = None
         self.poller: Poller | None = None
+        self.queue: asyncio.Queue | None = None
         self.router: Router = None
         self.background_tasks = set()
         self.api_path: str = ""
 
     async def connect(self, app: "Application") -> None:
         self.session = ClientSession(connector=TCPConnector(verify_ssl=False))
+        self.queue = asyncio.Queue()
         self.api_path: str = (
             f"https://api.telegram.org/bot{app.config.bot.token}/"
         )
-        self.poller = Poller(app.store)
+        self.poller = Poller(app.store, self.queue)
         self.logger.info("start polling")
         self.poller.start()
-        self.router = Router(app.store)
+        self.router = Router(app.store, self.queue)
         router_task = asyncio.create_task(self.router.route_update())
         self.logger.info(router_task)
         self.background_tasks.add(router_task)
@@ -90,7 +92,9 @@ class TgApiAccessor(BaseAccessor):
             if not data.get("result"):
                 return []
 
-            updates: list[dict[str, typing.Any]] = data.get("result")
+            updates: list[Update] = [
+                Update.from_dict(update) for update in data.get("result")
+            ]
             return updates
 
     async def send_message(

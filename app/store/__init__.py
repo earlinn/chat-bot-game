@@ -2,7 +2,8 @@ import typing
 from logging import getLogger
 
 from app.store.database.database import Database
-from app.store.rabbit.rabbit import Rabbit
+
+# from app.store.rabbit.rabbit import Rabbit
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application
@@ -35,9 +36,9 @@ class Store:
 
 def setup_store(app: "Application"):
     app.database = Database(app)
-    app.rabbit = Rabbit(app)
+    # app.rabbit = Rabbit(app)
     app.on_startup.append(app.database.connect)
-    app.on_startup.append(app.rabbit.connect)
+    # app.on_startup.append(app.rabbit.connect)
     app.on_cleanup.append(app.database.disconnect)
-    app.on_cleanup.append(app.rabbit.disconnect)
+    # app.on_cleanup.append(app.rabbit.disconnect)
     app.store = Store(app)
