@@ -56,7 +56,9 @@ services:
     env_file:
       - ./.env
     command: >
-      sh -c "gunicorn djangoadmin.wsgi:application --bind 0:8000"
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --no-input &&
+             gunicorn djangoadmin.wsgi:application --bind 0:8000"
     restart: always
     depends_on:
       postgres:
