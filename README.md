@@ -1,5 +1,10 @@
 # Black Jack Telegram Bot
 
+Телеграм-бот, которого можно добавить в телеграм-чат, чтобы играть в этом чате
+в игру Блэк Джек.
+
+# Технологии
+
 ![Static Badge](https://img.shields.io/badge/Python-FFD43B?style=for-the-badge&logo=python&logoColor=blue) 
 ![Static Badge](https://img.shields.io/badge/aiohttp-%232C5BB4.svg?&style=for-the-badge&logo=aiohttp&logoColor=white)
 ![Static Badge](https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=green)
@@ -11,8 +16,7 @@
 ![Static Badge](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-Телеграм-бот, которого можно добавить в телеграм-чат, чтобы играть в этом чате
-в игру Блэк Джек.
+Python 3.12, Telegram Bot API, Aiohttp, Django, SQLAlchemy, Alembic, PostgreSQL, Docker, Nginx, GitHub Actions
 
 # Особенности игры
 
