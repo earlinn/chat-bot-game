@@ -73,6 +73,12 @@ logs-nginx:
 logs-rabbit:
 	sudo docker logs --tail 50 --follow --timestamps blackjack_bot_rabbitmq
 
+prune-c:
+	sudo docker container prune
+
+prune-i:
+	sudo docker image prune
+
 ls-app-compose:
 	sudo docker compose -f docker-compose.local.yml exec -it app ls
 
