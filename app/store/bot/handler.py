@@ -56,11 +56,13 @@ class BotHandler:
             await self.bot_manager.say_join_non_existent_game_fail(context)
 
         elif query_message == const.JOIN_GAME_CALLBACK:
-            player: PlayerModel = await self.player_manager.get_player(
-                query.from_.id,
-                query.from_.username,
-                query.from_.first_name,
-                context.chat_id,
+            player: PlayerModel = (
+                await self.player_manager.get_player_with_balance(
+                    query.from_.id,
+                    query.from_.username,
+                    query.from_.first_name,
+                    context.chat_id,
+                )
             )
             game: GameModel = await self.game_manager.get_game(context.chat_id)
             await self.game_manager.get_gameplay(game.id, player.id)
@@ -140,11 +142,13 @@ class BotHandler:
         query_message: str = query.data
 
         if query_message == const.ADD_PLAYER_CALLBACK:
-            player: PlayerModel = await self.player_manager.get_player(
-                query.from_.id,
-                query.from_.username,
-                query.from_.first_name,
-                context.chat_id,
+            player: PlayerModel = (
+                await self.player_manager.get_player_with_balance(
+                    query.from_.id,
+                    query.from_.username,
+                    query.from_.first_name,
+                    context.chat_id,
+                )
             )
             await self.game_manager.get_gameplay(game.id, player.id)
             await self.bot_manager.say_player_joined(context)

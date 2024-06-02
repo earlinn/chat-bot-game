@@ -28,7 +28,8 @@ class PlayerManager:
         self.app = app
         self.logger = getLogger("player manager")
 
-    async def get_player(
+    # TODO: нужна транзакция
+    async def get_player_with_balance(
         self, user_id: int, username: str | None, first_name: str, chat_id: int
     ) -> PlayerModel:
         """Получает или создает нового игрока. Если создан новый игрок,

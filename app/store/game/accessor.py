@@ -160,21 +160,6 @@ class GameAccessor(BaseAccessor):
         async with self.app.database.session() as session:
             return await session.scalar(query)
 
-    # TODO: больше не используется из-за появления get_or_create в BaseAccessor
-    async def get_active_waiting_game_by_chat_id(
-        self, chat_id: int
-    ) -> GameModel | None:
-        """Ищет в определенном чате активную игру на стадии ожидания игроков."""
-        query = select(GameModel).where(
-            and_(
-                GameModel.chat_id == chat_id,
-                GameModel.status == GameStatus.ACTIVE,
-                GameModel.stage == GameStage.WAITING_FOR_PLAYERS_TO_JOIN,
-            )
-        )
-        async with self.app.database.session() as session:
-            return await session.scalar(query)
-
     async def change_game_fields(
         self, game_id: int, new_values: dict[str, Any]
     ) -> GameModel:
@@ -264,19 +249,6 @@ class GameAccessor(BaseAccessor):
 
 
 class GamePlayAccessor(BaseAccessor):
-    # TODO: больше не используется из-за появления get_or_create в BaseAccessor
-    async def create_gameplay(
-        self, game_id: int, player_id: int
-    ) -> GamePlayModel:
-        """Создает и отдает геймплей."""
-        gameplay = GamePlayModel(
-            game_id=game_id, player_id=player_id, player_bet=1
-        )
-        async with self.app.database.session() as session:
-            session.add(gameplay)
-            await session.commit()
-        return gameplay
-
     async def get_gameplay_by_game_and_player(
         self, game_id: int, player_id: int
     ) -> GamePlayModel | None:
